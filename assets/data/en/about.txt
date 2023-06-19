@@ -1,0 +1,4 @@
+Welcome to the Rapid Dominance strategy game. It is a simple turn-based strategy game.
+If you have any questions, would like to report a bug or make changes yourself, please visit the project page on Github.
+
+Rapid Dominance is a clone of the game Enemy Flag (https://www.enemyflag.net/) created by Bartłomiej Baron. Unlike ours, it has much more functionality and allows, for example, to play over the network. We recommend!

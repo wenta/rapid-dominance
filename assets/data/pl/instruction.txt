@@ -1,0 +1,57 @@
+1. Game Objective:
+
+The objective of the game is to conquer and control as many fields as possible on the game map.
+
+2. Game Setup:
+
+At the beginning of the game, you will be presented with a tile-based game map divided into a grid of fields.
+Each field can be either empty, contain gold, or occupied by a townhall.
+You will also see a left menu, a tilemap in the center, and a right menu on the screen.
+
+3. Players:
+
+The game can be played with multiple players, with a minimum of 2 players and a maximum of 16 players.
+Each player will be assigned a unique color and starting position on the map.
+The first player is the human player, and the rest are computer-controlled players.
+
+4. Gameplay:
+
+The game is played in turns, starting with the human player.
+Each turn, you have a limited number of action points that can be used to perform actions.
+Actions can include building structures or attacking other fields.
+The available actions are displayed in the right menu, and you can select an action to perform.
+Actions may require resources and have a cost in action points.
+You can only perform actions on fields that are within your control.
+
+5. Building Structures:
+
+You can build structures such as mines, barracks, wooden walls, and stone walls on empty fields.
+Structures provide various benefits, such as generating resources or defending your fields.
+Different structures require different resources and have different effects.
+
+6. Conquering Fields:
+
+To conquer an enemy field, you can attack it using your units.
+Fields can only be attacked if they are adjacent to your controlled fields.
+When attacking, you can choose the target field and initiate the attack.
+The outcome of the attack depends on the strength of your units and the defense of the target field.
+If you successfully conquer a field, it will become under your control.
+
+7. Townhalls:
+
+Townhalls are special structures that represent your main base.
+If all of your townhall are destroyed, you lose the game.
+Protect your townhalls by building defensive structures and securing your surrounding fields.
+
+8. Winning the Game:
+
+The game continues until all players except one are eliminated.
+
+9. Additional Features:
+
+The game includes additional features such as fog of war and resource management.
+Fog of war hides unexplored areas of the map, and you can uncover them by occupying more fields.
+Gold needed to build structures, so manage them wisely.
+Have Fun!
+
+Enjoy the strategic gameplay, make smart decisions, and outwit your opponents to claim victory!
