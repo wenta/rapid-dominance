@@ -2,7 +2,7 @@
 
 It is a simple turn-based strategy game written on Phaser 3 + Typescript.
 
-The game is live on Github Pages:
+The game is live on Github Pages: https://wenta.github.io/rapid-dominance/
 
 ## Installation
 
