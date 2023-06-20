@@ -145,7 +145,6 @@ export class GameScene extends Phaser.Scene {
             break;
           }
           case filemapSettings.stoneWall: {
-            console.log(JSON.stringify(new Field(x, y, false, false, null, filemapSettings.stoneWall, false,gameSettings.stoneWallResistance)))
             row.push(new Field(x, y, false, false, null, filemapSettings.stoneWall, false,gameSettings.stoneWallResistance));
             break;
           }
@@ -154,6 +153,7 @@ export class GameScene extends Phaser.Scene {
             break;
           }
           default: {
+            row.push(new Field(x, y, false, false, null, filemapSettings.blank, false));
             break;
           }
         }
