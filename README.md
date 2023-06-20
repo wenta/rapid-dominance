@@ -2,14 +2,7 @@
 
 It is a simple turn-based strategy game written on Phaser 3 + Typescript.
 
-# About graphics
-
-All tiles in version 0.1.0 are downloaded from https://opengameart.org/content/medieval-rts-120. Author: https://www.kenney.nl/. 
-
-# About the idea
-
-Rapid Dominance is a clone of the game Enemy Flag (https://www.enemyflag.net/) created by Bartłomiej Baron. It has much more functionality and allows, for example, to play over the network. We recommend!
-
+The game is live on Github Pages: https://wenta.github.io/rapid-dominance/
 
 ## Installation
 
@@ -31,6 +24,15 @@ $ npm start
 # Build the production ready code to the /dist folder
 $ npm run build
 ```
+
+# About the idea
+
+Rapid Dominance is a clone of the game Enemy Flag (https://www.enemyflag.net/) created by Bartłomiej Baron. It has much more functionality and allows, for example, to play over the network. We recommend!
+
+
+# About graphics
+
+All graphics are downloaded from https://opengameart.org. Author: https://www.kenney.nl/. 
 
 # Join in!
 
