@@ -66,8 +66,6 @@ export class GameScene extends Phaser.Scene {
     this.load.image("tilemap_border", "assets/buttonSquare_brown_pressed.png");
     this.load.image("panel_beige", "assets/panel_beige.png");
     this.load.tilemapCSV('map', 'assets/' + this.selectedMap + '.csv')
-
-    //buttonSquare_brown_pressed
   }
 
 
@@ -126,22 +124,41 @@ export class GameScene extends Phaser.Scene {
       let row: Field[] = new Array<Field>();
       for (let x = 0; x < 20; x++) {
         let tile = this.map.getTileAt(x, y)
-        if (tile?.index === filemapSettings.townhall) {
-          row.push(new Field(x, y, false, false, playerNumber, filemapSettings.townhall, false));
-          playerNumber++;
+
+
+        switch (tile?.index) {
+          case filemapSettings.townhall: {
+            row.push(new Field(x, y, false, false, playerNumber, filemapSettings.townhall, false, gameSettings.townhallResistance));
+            playerNumber++;
+            break;
+          }
+          case filemapSettings.goldDeposit: {
+            row.push(new Field(x, y, false, false, null, filemapSettings.goldDeposit, true));
+            break;
+          }
+          case filemapSettings.tree: {
+            row.push(new Field(x, y, false, true, null, filemapSettings.tree, false));
+            break;
+          }
+          case filemapSettings.stone: {
+            row.push(new Field(x, y, false, true, null, filemapSettings.stone, false));
+            break;
+          }
+          case filemapSettings.stoneWall: {
+            row.push(new Field(x, y, false, false, null, filemapSettings.stoneWall, false,gameSettings.stoneWallResistance));
+            break;
+          }
+          case filemapSettings.woodenWall: {
+            row.push(new Field(x, y, false, false, null, filemapSettings.stoneWall, false,gameSettings.woodenWallResistance));
+            break;
+          }
+          default: {
+            row.push(new Field(x, y, false, false, null, filemapSettings.blank, false));
+            break;
+          }
         }
-        else if (tile?.index === filemapSettings.goldDeposit) {
-          row.push(new Field(x, y, false, false, null, filemapSettings.goldDeposit, true));
-        }
-        else if (tile?.index === filemapSettings.tree) {
-          row.push(new Field(x, y, false, true, null, filemapSettings.tree, false));
-        }
-        else if (tile?.index === filemapSettings.stone) {
-          row.push(new Field(x, y, false, true, null, filemapSettings.stone, false));
-        }
-        else {
-          row.push(new Field(x, y, false, false, null, undefined, false));
-        }
+
+
       }
       f.push(row);
     }
@@ -491,7 +508,7 @@ export class GameScene extends Phaser.Scene {
       this.currentPlayer.increaseExperience(gameSettings.fieldAttack);
       this.currentPlayer.descreaseTroops(1);
       this.currentPlayer.descreaseActionPoints(gameSettings.fieldAttackAPCost);
-
+      console.log(field.resistance)
       if (field.typeField !== filemapSettings.blank && field.typeField !== filemapSettings.goldDeposit) {
         if (field.resistance > 1) {
           this.currentPlayer.descreaseTroops(1);
