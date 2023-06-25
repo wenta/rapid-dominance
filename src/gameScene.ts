@@ -174,9 +174,10 @@ export class GameScene extends Phaser.Scene {
    */
   initializePlayers() {
     //todo: human user should have random position, not zero!
+    const humanPlayerIndex = Math.floor(Math.random() * this.numberOfPlayers);
     this.players = new Array<Player>();
     for (let i = 0; i < this.numberOfPlayers; i++) {
-      const player = i === 0 ? new Player(i, true) : new Player(i)
+      const player = i === humanPlayerIndex ? new Player(i, true) : new Player(i)
       this.players.push(player)
     }
     this.currentPlayer = this.players[0]
