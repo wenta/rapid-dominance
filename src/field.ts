@@ -14,7 +14,7 @@ export default class Field {
     temporaryFogOfWar: boolean
 
     constructor(x: number, y: number, occupied: boolean, blocked: boolean
-        , player: number | null = null, typeField: number = filemapSettings.blank, isGoldDeposit: boolean) {
+        , player: number | null = null, typeField: number = filemapSettings.blank, isGoldDeposit: boolean, resistance: number = blankFieldResistance) {
         this.x = x
         this.y = y
         this.occupied = occupied
@@ -24,20 +24,6 @@ export default class Field {
         this.isGoldDeposit = isGoldDeposit
         this.initialFogOfWar = true
         this.temporaryFogOfWar = true
-
-        switch (typeField) {
-            case filemapSettings.blank: {
-                this.resistance = blankFieldResistance
-                break;
-            }
-            case filemapSettings.townhall: {
-                this.resistance = townhallResistance
-                break;
-            }
-            default: {
-                this.resistance = blankFieldResistance
-                break;
-            }
-        }
+        this.resistance = resistance
     }
 }

@@ -1,7 +1,6 @@
 import { Actions } from '../actions';
 import { ActionButton } from '../components/actionButton';
 import { MenuLabel } from '../components/menuLabel';
-import * as menuItemSettings from '../settings/textureSettings';
 import * as gameSettings from '../settings/gameSettings';
 
 export default class RightMenu extends Phaser.GameObjects.Container {

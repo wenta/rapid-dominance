@@ -23,7 +23,8 @@ export class WelcomeScene extends Phaser.Scene {
 
   pm: GameMaps[] = [{ mapName: 'Eagles Nest', id: 'eagles_nest', maxPlayers: 4 },
   { mapName: 'Eight', id: 'eight', maxPlayers: 8 },
-  { mapName: 'Hex', id: 'hex', maxPlayers: 16 }];
+  { mapName: 'Hex', id: 'hex', maxPlayers: 16 },
+  { mapName: 'Stone', id: 'stones', maxPlayers: 16 }];
 
 
 

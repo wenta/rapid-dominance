@@ -4,6 +4,9 @@ It is a simple turn-based strategy game written on Phaser 3 + Typescript.
 
 The game is live on Github Pages: https://wenta.github.io/rapid-dominance/
 
+<img width="1340" alt="image" src="https://github.com/wenta/rapid-dominance/assets/5645998/008bf721-c6af-4cf8-99c2-2d04a62e81b3">
+
+
 ## Installation
 
 To clone and run this game, you'll need [Git](https://git-scm.com) and [Node.js](https://nodejs.org/en/download/) (which comes with [npm](http://npmjs.com)) installed on your computer. From your command line:
