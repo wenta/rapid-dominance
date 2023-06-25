@@ -145,11 +145,11 @@ export class GameScene extends Phaser.Scene {
             break;
           }
           case filemapSettings.stoneWall: {
-            row.push(new Field(x, y, false, false, null, filemapSettings.stoneWall, false,gameSettings.stoneWallResistance));
+            row.push(new Field(x, y, false, false, null, filemapSettings.stoneWall, false, gameSettings.stoneWallResistance));
             break;
           }
           case filemapSettings.woodenWall: {
-            row.push(new Field(x, y, false, false, null, filemapSettings.stoneWall, false,gameSettings.woodenWallResistance));
+            row.push(new Field(x, y, false, false, null, filemapSettings.stoneWall, false, gameSettings.woodenWallResistance));
             break;
           }
           default: {
@@ -436,9 +436,15 @@ export class GameScene extends Phaser.Scene {
   leaveField(field: Field) {
     if (this.currentPlayer.actionPoints >= gameSettings.fieldLeaveAPCost) {
       if (field.player === this.currentPlayer.playerId) {
-        field.player = null;
-        field.occupied = false;
-        this.refreshFogOfWar();
+        if (this.fields.getPlayerFields(this.currentPlayer.playerId)
+          .filter(x => x.typeField === filemapSettings.townhall).length > 1) {
+          field.player = null;
+          field.occupied = false;
+          this.refreshFogOfWar();
+        }
+        else {
+          this.createPopup("You cannot leave the place with the last town hall.")
+        }
       }
     }
     else {
