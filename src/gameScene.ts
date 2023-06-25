@@ -12,6 +12,7 @@ import SelectedField from './selectedField';
 import * as filemapSettings from './settings/filemapSettings';
 import * as gameSettings from './settings/gameSettings';
 import { backgroundWidth, buttonSquareBrownPressedHeight, buttonSquareBrownPressedWidth } from './settings/textureSettings';
+import GameMode, { deathmatch } from './gameMode';
 
 
 
@@ -42,6 +43,7 @@ export class GameScene extends Phaser.Scene {
   fadingNumber: FadingNumber
   selectedMap: string = "grid"
   tilemapY = buttonSquareBrownPressedHeight * 0.75
+  selectedGameMode: GameMode = deathmatch
 
   constructor() {
     super({
@@ -168,16 +170,15 @@ export class GameScene extends Phaser.Scene {
 
 
 
-
+ 
   /**
    * We set first player as a human player.
    */
   initializePlayers() {
-    //todo: human user should have random position, not zero!
     const humanPlayerIndex = Math.floor(Math.random() * this.numberOfPlayers);
     this.players = new Array<Player>();
     for (let i = 0; i < this.numberOfPlayers; i++) {
-      const player = i === humanPlayerIndex ? new Player(i, true) : new Player(i)
+      const player = i === humanPlayerIndex ? new Player(i, i, true) : new Player(i)
       this.players.push(player)
     }
     this.currentPlayer = this.players[0]
