@@ -3,5 +3,4 @@ build/
 node_modules/
 typings/
 tmp/
-dist/
 .DS_Store
