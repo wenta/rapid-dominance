@@ -63,25 +63,25 @@ export class WelcomeScene extends Phaser.Scene {
   create(): void {
     this.sceneWidth = this.cameras.main.width;
     this.sceneHeight = this.cameras.main.height;
-
+  
     this.add.sprite(0, 0, 'background').setOrigin(0).setScale(this.sceneWidth / backgroundWidth);
-
-    var titleText: string = "Rapid Dominance";
+  
+    const titleText: string = "Rapid Dominance";
     this.title = this.add.text(this.cameras.main.worldView.x + (this.sceneWidth / 2), 100, titleText, {
       fontFamily: 'Arial',
       fontSize: '28px',
       color: '#000000',
     }).setOrigin(0.5);
-
-    const gameModesDropdownOptions: DropdownOption[] = this.getGameModesDropdownOptions()
-    const gameModesDropdown = this.add.container(0, 0, new Dropdown(this, 100, 200, "menu_item", "Game mode",
+  
+    const gameModesDropdownOptions: DropdownOption[] = this.getGameModesDropdownOptions();
+    const gameModesDropdown = new Dropdown(this, 100, 200, "menu_item", "Game mode",
       gameModesDropdownOptions,
       (selectedOption: string) => {
         this.changeGameMode(selectedOption);
       }
-    ));
-
-    const numberOfPlayersDropdownOptions: DropdownOption[] = []
+    );
+  
+    const numberOfPlayersDropdownOptions: DropdownOption[] = [];
     for (let i = 2; i <= 16; i++) {
       numberOfPlayersDropdownOptions.push({
         text: `${i} players`,
@@ -89,75 +89,72 @@ export class WelcomeScene extends Phaser.Scene {
         image: "menu_item"
       });
     }
-
-    this.numberOfPlayersDropdown = this.add.container(0, 0, new Dropdown(this, 300, 200, "menu_item", "Players",
+  
+    this.numberOfPlayersDropdown = new Dropdown(this, 300, 200, "menu_item", "Players",
       numberOfPlayersDropdownOptions,
       (selectedOption: string) => {
         this.numberOfPlayers = parseInt(selectedOption);
         this.generateMapOptions();
       }
-    ));
-    this.selectedModeLabel = this.add.container(0, 0, new Dropdown(this, 300, 200, "menu_item", this.selectedGameMode.name,
+    );
+    this.selectedModeLabel = new Dropdown(this, 300, 200, "menu_item", this.selectedGameMode.name,
       [], () => { }
-    ))
-
+    );
+  
     this.selectedMapDropdown = new Dropdown(this, 500, 200, "menu_item", "Map",
       [],
       (selectedOption: string) => {
         this.selectedMap = selectedOption;
       }
-    )
-    const mapDropdown = this.add.container(0, 0, this.selectedMapDropdown);
-    this.add.container(0, 0, gameModesDropdown);
-    this.add.container(0, 0, this.selectedModeLabel);
-    this.add.container(0, 0, this.numberOfPlayersDropdown);
-    this.add.container(0, 0, mapDropdown);
+    );
+  
+    const mapDropdown = this.selectedMapDropdown;
+  
     this.startButton = new RoutingButton(this, 0, 0, "menu_item", "Start", 1,
       () => {
         if (this.numberOfPlayers !== 0 && this.selectedMap !== "") {
           this.scene.start("GameScene", { selectedMap: this.selectedMap, numberOfPlayers: this.numberOfPlayers, selectedGameMode: this.selectedGameMode });
         }
       }
-
     );
-
-
+  
+    this.add.container(0, 0, gameModesDropdown);
+    this.add.container(0, 0, this.selectedModeLabel);
+    this.add.container(0, 0, this.numberOfPlayersDropdown);
+    this.add.container(0, 0, mapDropdown);
     this.add.container(600, 200, this.startButton);
     this.createFooter();
-
-
-
   }
+  
 
   getGameModesDropdownOptions(): DropdownOption[] {
-    let dos: DropdownOption[] = []
-
-    for (let i = 0; i < this.gms.length; i++) {
-      let gm = this.gms[i]
-      dos.push({ text: gm.name, value: gm.name, image: "menu_item" })
-    }
-    return dos
+    return this.gms.map(gm => ({
+      text: gm.name,
+      value: gm.name,
+      image: "menu_item"
+    }));
   }
 
   changeGameMode(option: string): void {
-    let gm = this.gms.find(x => x.name === option)
+    const gm = this.gms.find(x => x.name === option);
     if (gm) {
-      this.selectedGameMode = gm
+      this.selectedGameMode = gm;
       if (gm === deathmatch) {
         this.selectedModeLabel.setVisible(false);
         this.numberOfPlayersDropdown.setVisible(true);
-      }
-      else {
+      } else {
+        this.selectedModeLabel.setVisible(true);
+        this.numberOfPlayersDropdown.setVisible(false);
+        this.selectedModeLabel.destroy();
         this.selectedModeLabel = this.add.container(0, 0, new Dropdown(this, 300, 200, "menu_item", this.selectedGameMode.name,
           [], () => { }
-        ))
+        ));
         this.numberOfPlayers = this.selectedGameMode.getMaxNumberOfPlayers();
-        this.numberOfPlayersDropdown.setVisible(false);
-        this.selectedModeLabel.setVisible(true);
         this.generateMapOptions();
       }
     }
   }
+  
 
   generateMapOptions(): void {
     let opts = this.pm
