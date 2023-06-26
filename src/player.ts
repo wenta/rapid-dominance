@@ -11,10 +11,11 @@ export default class Player {
     isHuman: boolean
     isActive: boolean
     experience: number
+    team: number
 
 
-    constructor(id: number, human: boolean = false, color: number | null = null, initialGold: number = gameSettings.initalGold,
-        initialTroops: number = gameSettings.initalTroops, isActive: boolean = true) {
+    constructor(id: number, team: number | null = null, human: boolean = false, color: number | null = null, initialGold: number = gameSettings.initalGold,
+        initialTroops: number = gameSettings.initalTroops, isActive: boolean = true)  {
 
         this.playerId = id
         this.gold = initialGold
@@ -24,6 +25,7 @@ export default class Player {
         this.isHuman = human
         this.experience = 0
         this.isActive = isActive
+        this.team = team ? team : this.playerId
         if (color) {
             this.color = color
         }

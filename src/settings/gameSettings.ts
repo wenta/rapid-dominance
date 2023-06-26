@@ -9,7 +9,7 @@ export const actionPointGainPerRoundFromOuterFields = 0.01
 export const actionPointGainPerRoundForAdditionalTownhall = 1
 
 
-export const goldGainPerRound = 2
+export const goldGainPerRound = 5
 export const goldGainPerRoundForMine = Math.floor(Math.random() * 5 + 4) // from 4 to 8
 export const goldGainPerRoundForMineOnDeposit = Math.floor(Math.random() * 5 + 16)// from 8 to 16
 

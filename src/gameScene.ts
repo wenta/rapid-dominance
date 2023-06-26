@@ -12,6 +12,7 @@ import SelectedField from './selectedField';
 import * as filemapSettings from './settings/filemapSettings';
 import * as gameSettings from './settings/gameSettings';
 import { backgroundWidth, buttonSquareBrownPressedHeight, buttonSquareBrownPressedWidth } from './settings/textureSettings';
+import GameMode, { deathmatch } from './gameMode';
 
 
 
@@ -42,6 +43,7 @@ export class GameScene extends Phaser.Scene {
   fadingNumber: FadingNumber
   selectedMap: string = "grid"
   tilemapY = buttonSquareBrownPressedHeight * 0.75
+  selectedGameMode: GameMode = deathmatch
 
   constructor() {
     super({
@@ -56,6 +58,7 @@ export class GameScene extends Phaser.Scene {
     this.starsFallen = 0;
     this.selectedMap = data.selectedMap;
     this.numberOfPlayers = data.numberOfPlayers;
+    this.selectedGameMode = data.selectedGameMode;
   }
 
   preload(): void {
@@ -167,16 +170,37 @@ export class GameScene extends Phaser.Scene {
   }
 
 
+  shuffleList<T>(list: T[]): T[] {
+    const shuffledList = [...list]; // Create a copy of the list
+
+    for (let i = shuffledList.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1)); // Generate a random index
+
+      // Swap elements at positions i and j
+      [shuffledList[i], shuffledList[j]] = [shuffledList[j], shuffledList[i]];
+    }
+
+    return shuffledList;
+  }
 
 
   /**
    * We set first player as a human player.
    */
   initializePlayers() {
-    //todo: human user should have random position, not zero!
+    let playersInTeams: number[] = []
+    for (let i = 1; i <= this.selectedGameMode.numberOfTeams; i++) {
+      for (let j = 1; j <= this.selectedGameMode.playersPerTeams; j++) {
+        playersInTeams.push(i);
+      }
+    }
+    playersInTeams = this.shuffleList(playersInTeams)
+
+
+    const humanPlayerIndex = Math.floor(Math.random() * this.numberOfPlayers);
     this.players = new Array<Player>();
     for (let i = 0; i < this.numberOfPlayers; i++) {
-      const player = i === 0 ? new Player(i, true) : new Player(i)
+      const player = i === humanPlayerIndex ? new Player(i, playersInTeams.pop(), true) : new Player(i, playersInTeams.pop())
       this.players.push(player)
     }
     this.currentPlayer = this.players[0]
@@ -375,18 +399,25 @@ export class GameScene extends Phaser.Scene {
       let fieldToAttack = ns[index]
       let checkIfTownhalls = ns.find(x => x.typeField === filemapSettings.townhall)
       if (checkIfTownhalls) fieldToAttack = checkIfTownhalls
+      let team: Number[] = this.players.filter(x => x.team === this.currentPlayer.team).map(x => x.playerId)
+      let blockFriendlyField: boolean = fieldToAttack.player ? team.includes(fieldToAttack.player) : false
+      if (!blockFriendlyField) {
+        const neighboringFieldsOfExaminatedField = this.fields.getEncirclingFieldsByField(fieldToAttack)
+        const atLeastTwoCurrentPlayerFieldsInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId).length >= 2
+        const atLeastOneCurrentPlayerTownhallInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId && x.typeField === filemapSettings.townhall).length >= 1
 
-      const neighboringFieldsOfExaminatedField = this.fields.getEncirclingFieldsByField(fieldToAttack)
-      const atLeastTwoCurrentPlayerFieldsInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId).length >= 2
-      const atLeastOneCurrentPlayerTownhallInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId && x.typeField === filemapSettings.townhall).length >= 1
-      if (atLeastOneCurrentPlayerTownhallInNeighborhood || atLeastTwoCurrentPlayerFieldsInNeighborhood) {
-        this.attack(fieldToAttack);
-        return true
-      }
-      else {
+        if (atLeastOneCurrentPlayerTownhallInNeighborhood || atLeastTwoCurrentPlayerFieldsInNeighborhood) {
+          this.attack(fieldToAttack);
+          return true
+        }
+        else {
+          ns.splice(index, 1);
+        }
+      } else {
         ns.splice(index, 1);
       }
     }
+
     return false
   }
 
@@ -403,33 +434,44 @@ export class GameScene extends Phaser.Scene {
 
   humanAttack(field: Field) {
     if (this.currentPlayer.actionPoints >= gameSettings.fieldAttackAPCost) {
-      const fieldExistInNeighborhood = this.fields.getNeighboringFieldsByPlayer(this.currentPlayer.playerId)
-        .find(f => f.x === field.x && f.y === field.y)
-      const neighboringFieldsOfExaminatedField = this.fields.getEncirclingFieldsByField(field)
-      const atLeastTwoHumanFieldsInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId).length >= 2
-      const atLeastOneHumanTownhallInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId && x.typeField === filemapSettings.townhall).length >= 1
-      if (this.currentPlayer.troops > 0) {
-        if (fieldExistInNeighborhood) {
-          if (atLeastTwoHumanFieldsInNeighborhood || atLeastOneHumanTownhallInNeighborhood) {
-            if (this.attack(field)) {
-              this.rightPanel.updateTroopsAmount(this.currentPlayer.troops)
-              const tile = this.map.getTileAt(field.x, field.y);
-              if (tile) {
-                this.fadingNumber = new FadingNumber(this, tile.pixelX * this.newScale + this.centralPanelX, tile.pixelY * this.newScale, '0');
-                this.fadingNumber.displayNumber(field.resistance);
+      let team: Number[] = this.players.filter(x => x.team === this.currentPlayer.team).map(x => x.playerId)
+      let blockFriendlyField: boolean = field.player ? team.includes(field.player) : false
+      if (!blockFriendlyField) {
+        const fieldExistInNeighborhood = this.fields.getNeighboringFieldsByPlayer(this.currentPlayer.playerId)
+          .find(f => f.x === field.x && f.y === field.y)
+        const neighboringFieldsOfExaminatedField = this.fields.getEncirclingFieldsByField(field)
+        const atLeastTwoHumanFieldsInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId).length >= 2
+        const atLeastOneHumanTownhallInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId && x.typeField === filemapSettings.townhall).length >= 1
+        if (this.currentPlayer.troops > 0) {
+          if (fieldExistInNeighborhood) {
+            if (atLeastTwoHumanFieldsInNeighborhood || atLeastOneHumanTownhallInNeighborhood) {
+              if (this.attack(field)) {
+                this.rightPanel.updateTroopsAmount(this.currentPlayer.troops)
+                const tile = this.map.getTileAt(field.x, field.y);
+                if (tile) {
+                  this.fadingNumber = new FadingNumber(this, tile.pixelX * this.newScale + this.centralPanelX, tile.pixelY * this.newScale, '0');
+                  this.fadingNumber.displayNumber(field.resistance);
+                }
               }
             }
+
+          }
+          else {
+            this.createPopup("The attacked field must be adjacent.");
           }
 
         }
         else {
-          this.createPopup("The attacked field must be adjacent.");
+          this.createPopup("Not enough troops, build barrack first.");
         }
-
       }
       else {
-        this.createPopup("Not enough troops, build barrack first.");
+        this.createPopup("This player is on your team.");
       }
+    }
+
+    else {
+      this.createPopup("Not enough action points to attack.");
     }
   }
 
@@ -488,24 +530,33 @@ export class GameScene extends Phaser.Scene {
   refreshFogOfWar() {
     let p = this.players.find(x => x.isHuman)
     if (p) {
-      let currentVisibleFields = this.fields.listPlayerFieldsAndNeighboringFieldsInRange(p.playerId, 1);
-      this.fields.forEach(field => {
-        let tile = this.map.getTileAt(field.x, field.y)
-        if (tile !== null) {
-          if (currentVisibleFields.includes(field)) {
-            field.initialFogOfWar = false;
-            field.temporaryFogOfWar = false;
-            tile.setAlpha(0.9);
+      let currentVisibleFields: Field[] = []
+      let team = this.players.filter(x => x.team === p?.team)
+      if (team) {
+        team.forEach(player => {
+          let cvf = this.fields.listPlayerFieldsAndNeighboringFieldsInRange(player.playerId, 1)
+          currentVisibleFields = currentVisibleFields.concat(cvf)
+        })
+
+        this.fields.forEach(field => {
+          let tile = this.map.getTileAt(field.x, field.y)
+          if (tile !== null) {
+            if (currentVisibleFields.includes(field)) {
+              field.initialFogOfWar = false;
+              field.temporaryFogOfWar = false;
+              tile.setAlpha(0.9);
+            }
+            else {
+              field.temporaryFogOfWar = true;
+              tile.setAlpha(0);
+            }
+            if (field.temporaryFogOfWar && !field.initialFogOfWar) {
+              tile.setAlpha(0.4);
+            }
           }
-          else {
-            field.temporaryFogOfWar = true;
-            tile.setAlpha(0);
-          }
-          if (field.temporaryFogOfWar && !field.initialFogOfWar) {
-            tile.setAlpha(0.4);
-          }
-        }
-      })
+        })
+      }
+
     }
   }
 
@@ -514,7 +565,7 @@ export class GameScene extends Phaser.Scene {
       this.currentPlayer.increaseExperience(gameSettings.fieldAttack);
       this.currentPlayer.descreaseTroops(1);
       this.currentPlayer.descreaseActionPoints(gameSettings.fieldAttackAPCost);
-      console.log(field.resistance)
+
       if (field.typeField !== filemapSettings.blank && field.typeField !== filemapSettings.goldDeposit) {
         if (field.resistance > 1) {
           this.currentPlayer.descreaseTroops(1);
@@ -718,7 +769,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   handleHumanMove() {
-
+     // this.nextTurn(); // -> For testing uncomment this line to omit human move
   }
 
   updateHumanInfo() {
