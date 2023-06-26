@@ -28,3 +28,5 @@ export const t2p5 = new GameMode(2, 5, "2 teams x 5 players");
 export const t2p6 = new GameMode(2, 6, "2 teams x 6 players");
 export const t2p7 = new GameMode(2, 7, "2 teams x 7 players");
 export const t2p8 = new GameMode(2, 8, "2 teams x 8 players"); 
+export const t3p3 = new GameMode(3, 3, "3 teams x 3 players"); 
+export const t4p4 = new GameMode(4, 4, "4 teams x 4 players"); 

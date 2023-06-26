@@ -189,8 +189,8 @@ export class GameScene extends Phaser.Scene {
    */
   initializePlayers() {
     let playersInTeams: number[] = []
-    for (let i = 0; i < this.selectedGameMode.numberOfTeams; i++) {
-      for (let j = 0; j < this.selectedGameMode.playersPerTeams; j++) {
+    for (let i = 1; i <= this.selectedGameMode.numberOfTeams; i++) {
+      for (let j = 1; j <= this.selectedGameMode.playersPerTeams; j++) {
         playersInTeams.push(i);
       }
     }
@@ -399,18 +399,25 @@ export class GameScene extends Phaser.Scene {
       let fieldToAttack = ns[index]
       let checkIfTownhalls = ns.find(x => x.typeField === filemapSettings.townhall)
       if (checkIfTownhalls) fieldToAttack = checkIfTownhalls
+      let team: Number[] = this.players.filter(x => x.team === this.currentPlayer.team).map(x => x.playerId)
+      let blockFriendlyField: boolean = fieldToAttack.player ? team.includes(fieldToAttack.player) : false
+      if (!blockFriendlyField) {
+        const neighboringFieldsOfExaminatedField = this.fields.getEncirclingFieldsByField(fieldToAttack)
+        const atLeastTwoCurrentPlayerFieldsInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId).length >= 2
+        const atLeastOneCurrentPlayerTownhallInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId && x.typeField === filemapSettings.townhall).length >= 1
 
-      const neighboringFieldsOfExaminatedField = this.fields.getEncirclingFieldsByField(fieldToAttack)
-      const atLeastTwoCurrentPlayerFieldsInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId).length >= 2
-      const atLeastOneCurrentPlayerTownhallInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId && x.typeField === filemapSettings.townhall).length >= 1
-      if (atLeastOneCurrentPlayerTownhallInNeighborhood || atLeastTwoCurrentPlayerFieldsInNeighborhood) {
-        this.attack(fieldToAttack);
-        return true
-      }
-      else {
+        if (atLeastOneCurrentPlayerTownhallInNeighborhood || atLeastTwoCurrentPlayerFieldsInNeighborhood) {
+          this.attack(fieldToAttack);
+          return true
+        }
+        else {
+          ns.splice(index, 1);
+        }
+      } else {
         ns.splice(index, 1);
       }
     }
+
     return false
   }
 
@@ -427,33 +434,44 @@ export class GameScene extends Phaser.Scene {
 
   humanAttack(field: Field) {
     if (this.currentPlayer.actionPoints >= gameSettings.fieldAttackAPCost) {
-      const fieldExistInNeighborhood = this.fields.getNeighboringFieldsByPlayer(this.currentPlayer.playerId)
-        .find(f => f.x === field.x && f.y === field.y)
-      const neighboringFieldsOfExaminatedField = this.fields.getEncirclingFieldsByField(field)
-      const atLeastTwoHumanFieldsInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId).length >= 2
-      const atLeastOneHumanTownhallInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId && x.typeField === filemapSettings.townhall).length >= 1
-      if (this.currentPlayer.troops > 0) {
-        if (fieldExistInNeighborhood) {
-          if (atLeastTwoHumanFieldsInNeighborhood || atLeastOneHumanTownhallInNeighborhood) {
-            if (this.attack(field)) {
-              this.rightPanel.updateTroopsAmount(this.currentPlayer.troops)
-              const tile = this.map.getTileAt(field.x, field.y);
-              if (tile) {
-                this.fadingNumber = new FadingNumber(this, tile.pixelX * this.newScale + this.centralPanelX, tile.pixelY * this.newScale, '0');
-                this.fadingNumber.displayNumber(field.resistance);
+      let team: Number[] = this.players.filter(x => x.team === this.currentPlayer.team).map(x => x.playerId)
+      let blockFriendlyField: boolean = field.player ? team.includes(field.player) : false
+      if (!blockFriendlyField) {
+        const fieldExistInNeighborhood = this.fields.getNeighboringFieldsByPlayer(this.currentPlayer.playerId)
+          .find(f => f.x === field.x && f.y === field.y)
+        const neighboringFieldsOfExaminatedField = this.fields.getEncirclingFieldsByField(field)
+        const atLeastTwoHumanFieldsInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId).length >= 2
+        const atLeastOneHumanTownhallInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId && x.typeField === filemapSettings.townhall).length >= 1
+        if (this.currentPlayer.troops > 0) {
+          if (fieldExistInNeighborhood) {
+            if (atLeastTwoHumanFieldsInNeighborhood || atLeastOneHumanTownhallInNeighborhood) {
+              if (this.attack(field)) {
+                this.rightPanel.updateTroopsAmount(this.currentPlayer.troops)
+                const tile = this.map.getTileAt(field.x, field.y);
+                if (tile) {
+                  this.fadingNumber = new FadingNumber(this, tile.pixelX * this.newScale + this.centralPanelX, tile.pixelY * this.newScale, '0');
+                  this.fadingNumber.displayNumber(field.resistance);
+                }
               }
             }
+
+          }
+          else {
+            this.createPopup("The attacked field must be adjacent.");
           }
 
         }
         else {
-          this.createPopup("The attacked field must be adjacent.");
+          this.createPopup("Not enough troops, build barrack first.");
         }
-
       }
       else {
-        this.createPopup("Not enough troops, build barrack first.");
+        this.createPopup("This player is on your team.");
       }
+    }
+
+    else {
+      this.createPopup("Not enough action points to attack.");
     }
   }
 
@@ -547,7 +565,7 @@ export class GameScene extends Phaser.Scene {
       this.currentPlayer.increaseExperience(gameSettings.fieldAttack);
       this.currentPlayer.descreaseTroops(1);
       this.currentPlayer.descreaseActionPoints(gameSettings.fieldAttackAPCost);
-      console.log(field.resistance)
+
       if (field.typeField !== filemapSettings.blank && field.typeField !== filemapSettings.goldDeposit) {
         if (field.resistance > 1) {
           this.currentPlayer.descreaseTroops(1);
@@ -751,7 +769,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   handleHumanMove() {
-
+     // this.nextTurn(); // -> For testing uncomment this line to omit human move
   }
 
   updateHumanInfo() {

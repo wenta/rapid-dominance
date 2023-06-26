@@ -1,7 +1,7 @@
 import Dropdown, { DropdownOption } from './components/dropdown';
 import { MenuLabel } from './components/menuLabel';
 import { RoutingButton } from './components/routingButton';
-import GameMode, { deathmatch, t2p2, t3p2, t4p2, t5p2, t6p2, t7p2, t8p2 } from './gameMode';
+import GameMode, { deathmatch, t2p2, t3p2, t3p3, t4p2, t4p4, t5p2, t6p2, t7p2, t8p2 } from './gameMode';
 import { backgroundWidth, buttonHeight, buttonWidth } from './settings/textureSettings';
 
 interface GameMaps {
@@ -30,7 +30,7 @@ export class WelcomeScene extends Phaser.Scene {
   { mapName: 'Hex', id: 'hex', maxPlayers: 16 },
   { mapName: 'Stone', id: 'stones', maxPlayers: 16 }];
 
-  gms: GameMode[] = [deathmatch, t2p2, t3p2, t4p2, t5p2, t6p2, t7p2, t8p2]
+  gms: GameMode[] = [deathmatch, t2p2, t3p2, t4p2, t5p2, t6p2, t7p2, t8p2, t3p3, t4p4]
 
 
   constructor() {
