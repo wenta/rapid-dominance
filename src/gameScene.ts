@@ -58,6 +58,7 @@ export class GameScene extends Phaser.Scene {
     this.starsFallen = 0;
     this.selectedMap = data.selectedMap;
     this.numberOfPlayers = data.numberOfPlayers;
+    this.selectedGameMode = data.selectedGameMode;
   }
 
   preload(): void {
@@ -169,16 +170,37 @@ export class GameScene extends Phaser.Scene {
   }
 
 
+  shuffleList<T>(list: T[]): T[] {
+    const shuffledList = [...list]; // Create a copy of the list
 
- 
+    for (let i = shuffledList.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1)); // Generate a random index
+
+      // Swap elements at positions i and j
+      [shuffledList[i], shuffledList[j]] = [shuffledList[j], shuffledList[i]];
+    }
+
+    return shuffledList;
+  }
+
+
   /**
    * We set first player as a human player.
    */
   initializePlayers() {
+    let playersInTeams: number[] = []
+    for (let i = 0; i < this.selectedGameMode.numberOfTeams; i++) {
+      for (let j = 0; j < this.selectedGameMode.playersPerTeams; j++) {
+        playersInTeams.push(i);
+      }
+    }
+    playersInTeams = this.shuffleList(playersInTeams)
+
+
     const humanPlayerIndex = Math.floor(Math.random() * this.numberOfPlayers);
     this.players = new Array<Player>();
     for (let i = 0; i < this.numberOfPlayers; i++) {
-      const player = i === humanPlayerIndex ? new Player(i, i, true) : new Player(i)
+      const player = i === humanPlayerIndex ? new Player(i, playersInTeams.pop(), true) : new Player(i, playersInTeams.pop())
       this.players.push(player)
     }
     this.currentPlayer = this.players[0]
@@ -490,24 +512,33 @@ export class GameScene extends Phaser.Scene {
   refreshFogOfWar() {
     let p = this.players.find(x => x.isHuman)
     if (p) {
-      let currentVisibleFields = this.fields.listPlayerFieldsAndNeighboringFieldsInRange(p.playerId, 1);
-      this.fields.forEach(field => {
-        let tile = this.map.getTileAt(field.x, field.y)
-        if (tile !== null) {
-          if (currentVisibleFields.includes(field)) {
-            field.initialFogOfWar = false;
-            field.temporaryFogOfWar = false;
-            tile.setAlpha(0.9);
+      let currentVisibleFields: Field[] = []
+      let team = this.players.filter(x => x.team === p?.team)
+      if (team) {
+        team.forEach(player => {
+          let cvf = this.fields.listPlayerFieldsAndNeighboringFieldsInRange(player.playerId, 1)
+          currentVisibleFields = currentVisibleFields.concat(cvf)
+        })
+
+        this.fields.forEach(field => {
+          let tile = this.map.getTileAt(field.x, field.y)
+          if (tile !== null) {
+            if (currentVisibleFields.includes(field)) {
+              field.initialFogOfWar = false;
+              field.temporaryFogOfWar = false;
+              tile.setAlpha(0.9);
+            }
+            else {
+              field.temporaryFogOfWar = true;
+              tile.setAlpha(0);
+            }
+            if (field.temporaryFogOfWar && !field.initialFogOfWar) {
+              tile.setAlpha(0.4);
+            }
           }
-          else {
-            field.temporaryFogOfWar = true;
-            tile.setAlpha(0);
-          }
-          if (field.temporaryFogOfWar && !field.initialFogOfWar) {
-            tile.setAlpha(0.4);
-          }
-        }
-      })
+        })
+      }
+
     }
   }
 

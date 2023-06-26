@@ -115,7 +115,7 @@ export class WelcomeScene extends Phaser.Scene {
     this.startButton = new RoutingButton(this, 0, 0, "menu_item", "Start", 1,
       () => {
         if (this.numberOfPlayers !== 0 && this.selectedMap !== "") {
-          this.scene.start("GameScene", { selectedMap: this.selectedMap, numberOfPlayers: this.numberOfPlayers });
+          this.scene.start("GameScene", { selectedMap: this.selectedMap, numberOfPlayers: this.numberOfPlayers, selectedGameMode: this.selectedGameMode });
         }
       }
 
@@ -140,7 +140,7 @@ export class WelcomeScene extends Phaser.Scene {
   }
 
   changeGameMode(option: string): void {
-    let gm = this.gms.find(x => x.name == option)
+    let gm = this.gms.find(x => x.name === option)
     if (gm) {
       this.selectedGameMode = gm
       if (gm === deathmatch) {
