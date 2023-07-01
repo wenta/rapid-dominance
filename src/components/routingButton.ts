@@ -10,7 +10,7 @@ export class RoutingButton extends Phaser.GameObjects.Container {
     constructor(scene: Phaser.Scene, x: number, y: number, texture: string, text: string, buttonScale: number, route: () => void) {
         super(scene, x, y)
 
-        this.image = scene.add.image(x + (menuItemSettings.buttonWidth / 2), y, texture)
+        this.image = scene.add.image(x, y, texture)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => this.buttonSelected())
         
@@ -21,7 +21,7 @@ export class RoutingButton extends Phaser.GameObjects.Container {
             .setColor('#ffffff')
 
         this.buttonBeginPosition = new Phaser.Math.Vector2(x, y)
-        this.buttonEndPosition = new Phaser.Math.Vector2(x + menuItemSettings.buttonWidth, y + menuItemSettings.buttonHeight)
+        this.buttonEndPosition = new Phaser.Math.Vector2(x , y + menuItemSettings.buttonHeight)
 
         this.add(this.image)
         this.add(this.text)
