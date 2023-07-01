@@ -46,11 +46,13 @@ export default class Dropdown extends Phaser.GameObjects.Container {
                 this.toggleOptions();
             }, this);
             optionText.setOrigin(0.5);
-            this.optionsContainer.add([optionImage, optionText]);
+            this.optionsContainer.addAt([optionImage, optionText], 0);
         });
 
         this.optionsContainer.setVisible(false);
         scene.add.existing(this.optionsContainer);
+        this.optionsContainer.setDepth(scene.children.length);
+
     }
 
     private toggleOptions() {
@@ -74,7 +76,7 @@ export default class Dropdown extends Phaser.GameObjects.Container {
                 this.optionsContainer.setVisible(false)
             }, this);
             optionText.setOrigin(0.5);
-            this.optionsContainer.add([optionImage, optionText]);
+            this.optionsContainer.addAt([optionImage, optionText], 0);
         });
     }
 }
