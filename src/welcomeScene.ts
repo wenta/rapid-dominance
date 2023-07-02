@@ -32,6 +32,7 @@ export class WelcomeScene extends Phaser.Scene {
     { mapName: 'One vs one', id: 'one_vs_one', maxPlayers: 2 },
     { mapName: 'Eagles Nest', id: 'eagles_nest', maxPlayers: 4 },
     { mapName: 'Eight', id: 'eight', maxPlayers: 8 },
+    { mapName: 'Middle wall', id: 'middle_wall', maxPlayers: 12 },
     { mapName: 'Hex', id: 'hex', maxPlayers: 16 },
     { mapName: 'Stone', id: 'stones', maxPlayers: 16 }];
 
