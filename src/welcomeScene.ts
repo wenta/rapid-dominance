@@ -28,12 +28,12 @@ export class WelcomeScene extends Phaser.Scene {
   numberOfPlayersDropdown: Phaser.GameObjects.Container
   selectedModeLabel: Phaser.GameObjects.Container
 
-  pm: GameMaps[] = [{ mapName: 'Eagles Nest', id: 'eagles_nest', maxPlayers: 4 },
+  gameMaps: GameMaps[] = [{ mapName: 'Eagles Nest', id: 'eagles_nest', maxPlayers: 4 },
   { mapName: 'Eight', id: 'eight', maxPlayers: 8 },
   { mapName: 'Hex', id: 'hex', maxPlayers: 16 },
   { mapName: 'Stone', id: 'stones', maxPlayers: 16 }];
 
-  gms: GameMode[] = [deathmatch, t2p2, t3p2, t4p2, t5p2, t6p2, t7p2, t8p2, t3p3, t4p4]
+  gameModes: GameMode[] = [deathmatch, t2p2, t3p2, t4p2, t5p2, t6p2, t7p2, t8p2, t3p3, t4p4]
 
 
   constructor() {
@@ -47,17 +47,17 @@ export class WelcomeScene extends Phaser.Scene {
     this.load.image("menu_item", "assets/buttonLong_brown.png");
     this.load.image("background", "assets/backgroundColorDesert.png");
     this.load.image("eft_filemap", "assets/eft_filemap.png");
-    this.pm.forEach(x => this.load.tilemapCSV(x.id, 'assets/' + x.id + '.csv'))
+    this.gameMaps.forEach(x => this.load.tilemapCSV(x.id, 'assets/' + x.id + '.csv'))
 
   }
 
   createFooter() {
     let footerY = this.sceneHeight - (2 * buttonHeight)
-    this.aboutButton = new RoutingButton(this,  (menuItemSettings.buttonWidth / 2), 0, "menu_item", "About", 1,
+    this.aboutButton = new RoutingButton(this, (menuItemSettings.buttonWidth / 2), 0, "menu_item", "About", 1,
       () => this.scene.start("AboutScene", {}));
 
 
-    this.instructionButton = new RoutingButton(this, buttonWidth +  + (menuItemSettings.buttonWidth / 2), 0, "menu_item", "Instruction", 1,
+    this.instructionButton = new RoutingButton(this, buttonWidth + + (menuItemSettings.buttonWidth / 2), 0, "menu_item", "Instruction", 1,
       () => this.scene.start("InstructionScene", {}));
 
 
@@ -143,7 +143,7 @@ export class WelcomeScene extends Phaser.Scene {
     this.tileset = this.map.addTilesetImage('eft_filemap', undefined, filemapSettings.tileWidth, filemapSettings.tileHeight, -2, -2)
 
     if (this.tileset) {
-      let layer = this.map.createLayer(0, this.tileset, this.title.x - (this.tileset.tileWidth * 2) , 200)
+      let layer = this.map.createLayer(0, this.tileset, this.title.x - (this.tileset.tileWidth * 2), 200)
       if (layer) {
         layer.setScale(0.2);
         layer.setAlpha(0.9)
@@ -152,7 +152,7 @@ export class WelcomeScene extends Phaser.Scene {
   }
 
   getGameModesDropdownOptions(): DropdownOption[] {
-    return this.gms.map(gm => ({
+    return this.gameModes.map(gm => ({
       text: gm.name,
       value: gm.name,
       image: "menu_item"
@@ -160,7 +160,7 @@ export class WelcomeScene extends Phaser.Scene {
   }
 
   changeGameMode(option: string): void {
-    const gm = this.gms.find(x => x.name === option);
+    const gm = this.gameModes.find(x => x.name === option);
     if (gm) {
       this.selectedGameMode = gm;
       if (gm === deathmatch) {
@@ -173,15 +173,15 @@ export class WelcomeScene extends Phaser.Scene {
         this.selectedModeLabel = this.add.container(0, 0, new Dropdown(this, 100, 250, "menu_item", this.selectedGameMode.name,
           [], () => { }
         ));
-        this.numberOfPlayers = this.selectedGameMode.getMaxNumberOfPlayers();
-        this.generateMapOptions();
       }
+      this.numberOfPlayers = this.selectedGameMode.getMaxNumberOfPlayers();
+      this.generateMapOptions();
     }
   }
 
 
   generateMapOptions(): void {
-    let opts = this.pm
+    let opts = this.gameMaps
       .filter(map => map.maxPlayers >= this.numberOfPlayers)
       .map(map =>
       ({
