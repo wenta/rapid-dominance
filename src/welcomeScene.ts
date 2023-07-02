@@ -28,10 +28,12 @@ export class WelcomeScene extends Phaser.Scene {
   numberOfPlayersDropdown: Phaser.GameObjects.Container
   selectedModeLabel: Phaser.GameObjects.Container
 
-  gameMaps: GameMaps[] = [{ mapName: 'Eagles Nest', id: 'eagles_nest', maxPlayers: 4 },
-  { mapName: 'Eight', id: 'eight', maxPlayers: 8 },
-  { mapName: 'Hex', id: 'hex', maxPlayers: 16 },
-  { mapName: 'Stone', id: 'stones', maxPlayers: 16 }];
+  gameMaps: GameMaps[] = [
+    { mapName: 'One vs one', id: 'one_vs_one', maxPlayers: 2 },
+    { mapName: 'Eagles Nest', id: 'eagles_nest', maxPlayers: 4 },
+    { mapName: 'Eight', id: 'eight', maxPlayers: 8 },
+    { mapName: 'Hex', id: 'hex', maxPlayers: 16 },
+    { mapName: 'Stone', id: 'stones', maxPlayers: 16 }];
 
   gameModes: GameMode[] = [deathmatch, t2p2, t3p2, t4p2, t5p2, t6p2, t7p2, t8p2, t3p3, t4p4]
 
