@@ -57,17 +57,17 @@ export class WelcomeScene extends Phaser.Scene {
 
   createFooter() {
     let footerY = this.sceneHeight - (2 * buttonHeight)
-    this.aboutButton = new RoutingButton(this, (menuItemSettings.buttonWidth / 2), 0, "menu_item", "About", 1,
+    this.aboutButton = new RoutingButton(this, - (menuItemSettings.buttonWidth / 2), 0, "menu_item", "About", 1,
       () => this.scene.start("AboutScene", {}));
 
 
-    this.instructionButton = new RoutingButton(this, buttonWidth + + (menuItemSettings.buttonWidth / 2), 0, "menu_item", "Instruction", 1,
+    this.instructionButton = new RoutingButton(this,  (menuItemSettings.buttonWidth / 2), 0, "menu_item", "Instruction", 1,
       () => this.scene.start("InstructionScene", {}));
 
 
     this.add.container(0, footerY, [this.aboutButton, this.instructionButton])
       .setScale(0.7)
-      .setX(this.cameras.main.worldView.x + (this.sceneWidth / 4));
+      .setX((this.sceneWidth / 2));
   }
 
   create(): void {
