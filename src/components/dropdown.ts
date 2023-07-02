@@ -17,8 +17,7 @@ export default class Dropdown extends Phaser.GameObjects.Container {
         texture: string,
         labelText: string,
         options: DropdownOption[],
-        onSelect: (text: string) => void,
-        buttonScale: number = 3
+        onSelect: (text: string) => void
     ) {
         super(scene, x, y);
         scene.add.existing(this);
@@ -63,6 +62,7 @@ export default class Dropdown extends Phaser.GameObjects.Container {
 
 
     updateOptions(scene: Phaser.Scene, options: DropdownOption[], onSelect: (text: string) => void) {
+        this.optionsContainer.removeAll(true);
         options.forEach((option, index) => {
             const optionImage = scene.add.image(0, index * this.background.displayHeight, option.image);
             const optionText = scene.add.text(0, index * this.background.displayHeight, option.text, {
