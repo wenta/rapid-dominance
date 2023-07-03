@@ -17,7 +17,6 @@ export default class Player {
 
     constructor(id: number, team: number | null = null, name: string, human: boolean = false, color: number | null = null, initialGold: number = gameSettings.initalGold,
         initialTroops: number = gameSettings.initalTroops, isActive: boolean = true) {
-        console.log(name)
         this.playerId = id
         this.gold = initialGold
         this.troops = initialTroops
