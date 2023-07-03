@@ -61,7 +61,7 @@ export default class RightMenu extends Phaser.GameObjects.Container {
         this.add(this.buildTownhallButton)
         this.add(this.buildMineButton)
         this.add(this.buildBarracksButton)
-//        this.add(this.buildObserwationTowerButton)
+        //        this.add(this.buildObserwationTowerButton)
         this.add(this.buildWoddenWallButton)
         this.add(this.buildStoneWallButton)
 
