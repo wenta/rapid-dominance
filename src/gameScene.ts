@@ -5,6 +5,7 @@ import { FadingNumber } from './components/fadingNumber';
 import { Popup } from './components/popup';
 import Field from './field';
 import Fields from './fields';
+import GameMode, { deathmatch } from './gameMode';
 import LeftMenu from './menus/leftMenu';
 import RightMenu from './menus/rightMenu';
 import Player from './player';
@@ -12,15 +13,11 @@ import SelectedField from './selectedField';
 import * as filemapSettings from './settings/filemapSettings';
 import * as gameSettings from './settings/gameSettings';
 import { backgroundWidth, buttonSquareBrownPressedHeight, buttonSquareBrownPressedWidth } from './settings/textureSettings';
-import GameMode, { deathmatch } from './gameMode';
 
 
 
 export class GameScene extends Phaser.Scene {
   delta: number;
-  lastStarTime: number;
-  starsCaught: number;
-  starsFallen: number;
   info: Phaser.GameObjects.Text;
   map: Phaser.Tilemaps.Tilemap;
   tileset: Phaser.Tilemaps.Tileset;
@@ -53,9 +50,6 @@ export class GameScene extends Phaser.Scene {
 
   init(data): void {
     this.delta = 1000;
-    this.lastStarTime = 0;
-    this.starsCaught = 0;
-    this.starsFallen = 0;
     this.selectedMap = data.selectedMap;
     this.numberOfPlayers = data.numberOfPlayers;
     this.selectedGameMode = data.selectedGameMode;
@@ -74,7 +68,7 @@ export class GameScene extends Phaser.Scene {
 
 
   createLeftPanel() {
-    this.leftPanel = new LeftMenu(this, 0, 0, this.sceneWidth / 4, "menu_item", this.numberOfPlayers);
+    this.leftPanel = new LeftMenu(this, 0, 0, this.sceneWidth / 4, "menu_item", this.players);
     this.leftPanel.setScale(this.newScale)
     this.add.container(0, 0, this.leftPanel)
   }
@@ -188,19 +182,22 @@ export class GameScene extends Phaser.Scene {
    * We set first player as a human player.
    */
   initializePlayers() {
+    let names = ['Hammurabi', 'Cyrus', 'Saladin', 'Subutai', 'Joshua', 'Scipio', 'Clausewitz', 'Caesar', 'Sun Tzu',
+      'Alexander', 'Napoleon', 'Hannibal', 'Ashoka', 'Charlemagne', 'Temujin', 'Attila', 'Shingen', 'Nobunaga',
+      'Joan of Arc', 'Frederick']
     let playersInTeams: number[] = []
     for (let i = 1; i <= this.selectedGameMode.numberOfTeams; i++) {
       for (let j = 1; j <= this.selectedGameMode.playersPerTeams; j++) {
         playersInTeams.push(i);
       }
     }
+    names = this.shuffleList(names)
     playersInTeams = this.shuffleList(playersInTeams)
-
 
     const humanPlayerIndex = Math.floor(Math.random() * this.numberOfPlayers);
     this.players = new Array<Player>();
     for (let i = 0; i < this.numberOfPlayers; i++) {
-      const player = i === humanPlayerIndex ? new Player(i, playersInTeams.pop(), true) : new Player(i, playersInTeams.pop())
+      const player = i === humanPlayerIndex ? new Player(i, playersInTeams.pop(), names[i], true) : new Player(i, playersInTeams.pop(), names[i])
       this.players.push(player)
     }
     this.currentPlayer = this.players[0]
@@ -235,7 +232,7 @@ export class GameScene extends Phaser.Scene {
 
     this.add.sprite(0, 0, 'background2').setOrigin(0).setScale(this.sceneWidth / backgroundWidth);
 
-    this.createLeftPanel()
+
 
     this.map = this.make.tilemap({ key: 'map', tileWidth: filemapSettings.tileWidth, tileHeight: filemapSettings.tileHeight })
     let tileset = this.map.addTilesetImage('eft_filemap', undefined, filemapSettings.tileWidth, filemapSettings.tileHeight, -2, -2)
@@ -259,7 +256,7 @@ export class GameScene extends Phaser.Scene {
 
     this.initializeFields()
     this.initializePlayers()
-
+    this.createLeftPanel()
 
   }
 
@@ -568,7 +565,6 @@ export class GameScene extends Phaser.Scene {
 
       if (field.typeField !== filemapSettings.blank && field.typeField !== filemapSettings.goldDeposit) {
         if (field.resistance > 1) {
-          this.currentPlayer.descreaseTroops(1);
           field.resistance = field.resistance - 1;
         }
         else {
@@ -769,7 +765,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   handleHumanMove() {
-     // this.nextTurn(); // -> For testing uncomment this line to omit human move
+    // this.nextTurn(); // -> For testing uncomment this line to omit human move
   }
 
   updateHumanInfo() {

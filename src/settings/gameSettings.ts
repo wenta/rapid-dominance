@@ -15,8 +15,8 @@ export const goldGainPerRoundForMineOnDeposit = Math.floor(Math.random() * 5 + 1
 
 export const armyGrowthAfterFailedEnemyAttacks = 0.5
 
-export const initalTroops = 10 
-export const initalGold = 200
+export const initalTroops = 10
+export const initalGold = 300
 
 export const fieldAttackAPCost = 2
 export const fieldLeaveAPCost = 1
