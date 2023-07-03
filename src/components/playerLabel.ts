@@ -1,5 +1,6 @@
 import Player from '../player';
 import * as menuItemSettings from '../settings/textureSettings';
+
 export class PlayerLabel extends Phaser.GameObjects.Container {
     private image: Phaser.GameObjects.Image
     private text: Phaser.GameObjects.Text
@@ -22,7 +23,7 @@ export class PlayerLabel extends Phaser.GameObjects.Container {
     }
 
     update(player: Player, currentPlayer: number) {
-        this.text.text = "Player " + player.playerId;
+        this.text.text = player.name;
         if (!player.isActive) {
             this.text.setColor("#808080")
         }

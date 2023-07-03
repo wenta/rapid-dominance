@@ -1,10 +1,9 @@
 import Dropdown, { DropdownOption } from './components/dropdown';
-import { MenuLabel } from './components/menuLabel';
-import * as menuItemSettings from './settings/textureSettings';
 import { RoutingButton } from './components/routingButton';
 import GameMode, { deathmatch, t2p2, t3p2, t3p3, t4p2, t4p4, t5p2, t6p2, t7p2, t8p2 } from './gameMode';
-import { backgroundWidth, buttonHeight, buttonWidth } from './settings/textureSettings';
 import * as filemapSettings from './settings/filemapSettings';
+import * as menuItemSettings from './settings/textureSettings';
+import { backgroundWidth, buttonHeight } from './settings/textureSettings';
 interface GameMaps {
   mapName: string,
   id: string,
@@ -79,7 +78,7 @@ export class WelcomeScene extends Phaser.Scene {
     const titleText: string = "Rapid Dominance";
     this.title = this.add.text(this.cameras.main.worldView.x + (this.sceneWidth / 2), 100, titleText, {
       fontFamily: 'Arial',
-      fontSize: '28px',
+      fontSize: '38px',
       color: '#000000',
     }).setOrigin(0.5);
 
@@ -127,11 +126,6 @@ export class WelcomeScene extends Phaser.Scene {
         }
       }
     );
-
-
-
-
-
 
     this.add.container(0, 0, mapDropdown);
     this.add.container(0, 350, this.startButton);
