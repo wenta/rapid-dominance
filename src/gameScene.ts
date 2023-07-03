@@ -177,6 +177,11 @@ export class GameScene extends Phaser.Scene {
     return shuffledList;
   }
 
+  distinctList<T>(list: T[]): T[] {
+    return Array.from(new Set(list))
+  }
+
+
 
   /**
    * We set first player as a human player.
@@ -512,7 +517,7 @@ export class GameScene extends Phaser.Scene {
             this.time.delayedCall(3000, () => this.scene.start("WelcomeScene", { p: 0, selectedMap: "" }));
           }
           else {
-            this.createPopup("Player " + examinatedPlayer.playerId + " eliminated.")
+            this.createPopup(examinatedPlayer.name + " eliminated.")
           }
         }
       }
@@ -614,8 +619,10 @@ export class GameScene extends Phaser.Scene {
       (fieldsWithGold.filter(x => x.isGoldDeposit).length * gameSettings.goldGainPerRoundForMineOnDeposit)
   }
 
+
+
   nextTurn() {
-    if (this.players.filter(x => x.isActive).length > 1) {
+    if (this.players.filter(x => x.isActive).length > 1 && this.distinctList(this.players.map(x => x.team)).length > 1) {
       this.currentPlayer.increaseGold(this.calculateAmountOfPlayerGold());
       let innerFieldsByPlayer = this.fields.getInnerFieldsByPlayer(this.currentPlayer.playerId);
       let outerFieldsByPlayer = this.fields.getOuterFieldsByPlayer(this.currentPlayer.playerId);
@@ -778,6 +785,7 @@ export class GameScene extends Phaser.Scene {
 
 
   handleBotMove() {
+    const currentActionPoints = this.currentPlayer.actionPoints
     const playerFieldsFlatten = this.fields.getPlayerFields(this.currentPlayer.playerId);
     const blankPlayerFields = playerFieldsFlatten.filter(x => x.typeField === filemapSettings.blank);
     const freeGoldDeposits = playerFieldsFlatten.filter(x => x.typeField === filemapSettings.goldDeposit);
@@ -796,6 +804,10 @@ export class GameScene extends Phaser.Scene {
     }
     else {
       this.getPossibleFieldsToAttack();
+    }
+    if (currentActionPoints === this.currentPlayer.actionPoints) {
+      // bot not able to do any move - end turn
+      this.nextTurn();
     }
   }
 
