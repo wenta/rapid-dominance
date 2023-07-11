@@ -1,4 +1,5 @@
 import Field from "./field";
+import * as filemapSettings from './settings/filemapSettings';
 
 export default class Fields {
     private fields: Field[][];
@@ -53,7 +54,8 @@ export default class Fields {
         return ((topField && topField.player === player) || topField === undefined) &&
             ((bottomField && bottomField.player === player) || bottomField === undefined) &&
             ((leftField && leftField.player === player) || leftField === undefined) &&
-            ((rightField && rightField.player === player) || rightField === undefined)
+            ((rightField && rightField.player === player) || rightField === undefined) &&
+            (field.typeField === filemapSettings.blank || field.typeField === filemapSettings.goldDeposit)
     }
 
     /**
