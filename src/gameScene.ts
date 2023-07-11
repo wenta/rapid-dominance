@@ -402,7 +402,7 @@ export class GameScene extends Phaser.Scene {
       let checkIfTownhalls = ns.find(x => x.typeField === filemapSettings.townhall)
       if (checkIfTownhalls) fieldToAttack = checkIfTownhalls
       let team: Number[] = this.players.filter(x => x.team === this.currentPlayer.team).map(x => x.playerId)
-      let blockFriendlyField: boolean = fieldToAttack.player ? team.includes(fieldToAttack.player) : false
+      let blockFriendlyField: boolean = fieldToAttack.player !== null ? team.includes(fieldToAttack.player) : false
       if (!blockFriendlyField) {
         const neighboringFieldsOfExaminatedField = this.fields.getEncirclingFieldsByField(fieldToAttack)
         const atLeastTwoCurrentPlayerFieldsInNeighborhood = neighboringFieldsOfExaminatedField.filter(x => x.player === this.currentPlayer.playerId).length >= 2
@@ -622,7 +622,8 @@ export class GameScene extends Phaser.Scene {
 
 
   nextTurn() {
-    if (this.players.filter(x => x.isActive).length > 1 && this.distinctList(this.players.map(x => x.team)).length > 1) {
+    let activePlayers = this.players.filter(x => x.isActive)
+    if (activePlayers.length > 1 && this.distinctList(activePlayers.map(x => x.team)).length > 1) {
       this.currentPlayer.increaseGold(this.calculateAmountOfPlayerGold());
       let innerFieldsByPlayer = this.fields.getInnerFieldsByPlayer(this.currentPlayer.playerId);
       let outerFieldsByPlayer = this.fields.getOuterFieldsByPlayer(this.currentPlayer.playerId);
@@ -772,7 +773,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   handleHumanMove() {
-    // this.nextTurn(); // -> For testing uncomment this line to omit human move
+     //this.nextTurn(); // -> For testing uncomment this line to omit human move
+     
   }
 
   updateHumanInfo() {
