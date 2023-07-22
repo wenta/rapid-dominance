@@ -773,8 +773,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   handleHumanMove() {
-     //this.nextTurn(); // -> For testing uncomment this line to omit human move
-     
+    this.rightPanel.showPlayerActionsAndBuilding(true);
+    //this.nextTurn(); // -> For testing uncomment this line to omit human move
+
   }
 
   updateHumanInfo() {
@@ -787,6 +788,7 @@ export class GameScene extends Phaser.Scene {
 
 
   handleBotMove() {
+    this.rightPanel.showPlayerActionsAndBuilding(false);
     const currentActionPoints = this.currentPlayer.actionPoints
     const playerFieldsFlatten = this.fields.getPlayerFields(this.currentPlayer.playerId);
     const blankPlayerFields = playerFieldsFlatten.filter(x => x.typeField === filemapSettings.blank);

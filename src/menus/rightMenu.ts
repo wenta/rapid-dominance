@@ -86,4 +86,30 @@ export default class RightMenu extends Phaser.GameObjects.Container {
     updateControlledLand(amount: number) {
         this.landControlledLabel.updateText(amount + " land");
     }
+
+    showPlayerActionsAndBuilding(show: Boolean) {
+        if (show) {
+            this.attackButton.visible = true
+            this.leaveButton.visible = true
+            this.finishButton.visible = true
+            this.buildTownhallButton.visible = true
+            this.buildMineButton.visible = true
+            this.buildBarracksButton.visible = true
+            this.buildObserwationTowerButton.visible = true
+            this.buildWoddenWallButton.visible = true
+            this.buildStoneWallButton.visible = true
+
+        }
+        else {
+            this.attackButton.visible = false
+            this.leaveButton.visible = false
+            this.finishButton.visible = false
+            this.buildTownhallButton.visible = false
+            this.buildMineButton.visible = false
+            this.buildBarracksButton.visible = false
+            this.buildObserwationTowerButton.visible = false
+            this.buildWoddenWallButton.visible = false
+            this.buildStoneWallButton.visible = false
+        }
+    }
 }
