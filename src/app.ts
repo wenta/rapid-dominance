@@ -19,19 +19,11 @@ const config: Phaser.Types.Core.GameConfig = {
     //height: 600,
     parent: "game",
     scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.RESIZE,
         parent: 'game',
         width: SIZE_WIDTH_SCREEN,
         height: SIZE_HEIGHT_SCREEN,
-        autoCenter: Phaser.Scale.Center.CENTER_BOTH,
-        min: {
-            width: MIN_SIZE_WIDTH_SCREEN,
-            height: MIN_SIZE_HEIGHT_SCREEN
-        },
-        max: {
-            width: MAX_SIZE_WIDTH_SCREEN,
-            height: MAX_SIZE_HEIGHT_SCREEN
-        }
+        autoCenter: Phaser.Scale.Center.CENTER_BOTH
     },
     mode: Phaser.Scale.RESIZE,
     scene: [WelcomeScene, GameScene, InstructionScene, AboutScene],
