@@ -17,13 +17,13 @@ import { backgroundWidth, buttonSquareBrownPressedHeight, buttonSquareBrownPress
 
 
 export class GameScene extends Phaser.Scene {
-  delta: number;
+  timeDelta: number;
   info: Phaser.GameObjects.Text;
   map: Phaser.Tilemaps.Tilemap;
   tileset: Phaser.Tilemaps.Tileset;
   leftPanel: LeftMenu;
   rightPanel: RightMenu;
-  newScale: number = 1
+  scaleFactor: number = 1
   rightPanelX: number = 0;
   centralPanelX: number = 0;
   mapLayerX: number = 0
@@ -49,7 +49,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   init(data): void {
-    this.delta = 1000;
+    this.timeDelta = 1000;
     this.selectedMap = data.selectedMap;
     this.numberOfPlayers = data.numberOfPlayers;
     this.selectedGameMode = data.selectedGameMode;
@@ -69,7 +69,7 @@ export class GameScene extends Phaser.Scene {
 
   createLeftPanel() {
     this.leftPanel = new LeftMenu(this, 0, 0, this.sceneWidth / 4, "menu_item", this.players);
-    this.leftPanel.setScale(this.newScale)
+    this.leftPanel.setScale(this.scaleFactor)
     this.add.container(0, 0, this.leftPanel)
   }
 
@@ -220,7 +220,7 @@ export class GameScene extends Phaser.Scene {
     let bindedAction = this.performAction.bind(this);
     this.rightPanel = new RightMenu(this, 0, 0, this.sceneWidth / 4, this.rightPanelX, y, "menu_item", 0xffffff, 25, 3, bindedAction);
     this.add.container(this.rightPanelX, y, this.rightPanel)
-    this.rightPanel.setScale(this.newScale)
+    this.rightPanel.setScale(this.scaleFactor)
   }
 
   create(): void {
@@ -232,7 +232,7 @@ export class GameScene extends Phaser.Scene {
      */
     this.sceneWidth = this.cameras.main.width;
     this.sceneHeight = this.cameras.main.height;
-    this.newScale = (this.sceneWidth / 2) / (filemapSettings.tileWidth * 20)
+    this.scaleFactor = (this.sceneWidth / 2) / (filemapSettings.tileWidth * 20)
 
 
     this.add.sprite(0, 0, 'background2').setOrigin(0).setScale(this.sceneWidth / backgroundWidth);
@@ -248,7 +248,7 @@ export class GameScene extends Phaser.Scene {
 
       if (layer) {
         this.centralPanelX = layer.x
-        layer.setScale(this.newScale);
+        layer.setScale(this.scaleFactor);
         this.mapLayerX = layer.x;
         this.rightPanelX = layer.getBounds().width + layer.x;
         layer.setAlpha(0.8)
@@ -313,7 +313,7 @@ export class GameScene extends Phaser.Scene {
 
       const tileSize = this.map.tileWidth;
       graphics.strokeRect(tile.pixelX, tile.pixelY, tileSize, tileSize);
-      graphics.setScale(this.newScale, this.newScale)
+      graphics.setScale(this.scaleFactor, this.scaleFactor)
       graphics.setX(this.centralPanelX)
       graphics.setY(this.tilemapY);
       return graphics
@@ -384,7 +384,7 @@ export class GameScene extends Phaser.Scene {
             ));
           }
 
-          this.borders.setScale(this.newScale, this.newScale);
+          this.borders.setScale(this.scaleFactor, this.scaleFactor);
           this.borders.setX(this.centralPanelX);
           this.borders.setY(this.tilemapY);
         }
@@ -451,7 +451,7 @@ export class GameScene extends Phaser.Scene {
                 this.rightPanel.updateTroopsAmount(this.currentPlayer.troops)
                 const tile = this.map.getTileAt(field.x, field.y);
                 if (tile) {
-                  this.fadingNumber = new FadingNumber(this, tile.pixelX * this.newScale + this.centralPanelX, tile.pixelY * this.newScale, '0');
+                  this.fadingNumber = new FadingNumber(this, tile.pixelX * this.scaleFactor + this.centralPanelX, tile.pixelY * this.scaleFactor, '0');
                   this.fadingNumber.displayNumber(field.resistance);
                 }
               }
@@ -681,7 +681,7 @@ export class GameScene extends Phaser.Scene {
   createPopup(text: string) {
     let popup = new Popup(this, this.sceneWidth / 4, this.sceneHeight / 4, "panel_beige", text);
 
-    popup.setScale(this.newScale);
+    popup.setScale(this.scaleFactor);
     this.add.container(0, 0, popup);
     this.time.delayedCall(3000, () => popup.destroy());
   }
@@ -835,8 +835,7 @@ export class GameScene extends Phaser.Scene {
 
   updateSelectedField(x, y) {
     this.selectedField.clearGraphics();
-
-    var g = this.createTileOutline(x, y)
+    let g = this.createTileOutline(x, y)
     this.selectedField = new SelectedField(this.fields.get(y, x), g)
   }
 
@@ -854,7 +853,7 @@ export class GameScene extends Phaser.Scene {
 
     this.input.on('pointerup', function (pointer) {
       if (pointer.worldX > this.mapLayerX && pointer.worldX < this.rightPanelX) {
-        var tile: Phaser.Tilemaps.Tile = this.map.getTileAtWorldXY(pointer.worldX, pointer.worldY);
+        let tile: Phaser.Tilemaps.Tile = this.map.getTileAtWorldXY(pointer.worldX, pointer.worldY);
         this.updateSelectedField(tile.x, tile.y);
       }
 
@@ -862,16 +861,16 @@ export class GameScene extends Phaser.Scene {
     }, this);
 
     if (this.input.keyboard && this.selectedField !== undefined && this.currentPlayer.isHuman) {
-      var cursors = this.input.keyboard.createCursorKeys();
-      var attackKey = this.input.keyboard.addKey('A');
-      var finishKey = this.input.keyboard.addKey('F');
-      var leaveKey = this.input.keyboard.addKey('L');
-      var buildTownhallKey = this.input.keyboard.addKey('T');
-      var buildBarrackKey = this.input.keyboard.addKey('B');
-      var buildMineKey = this.input.keyboard.addKey('M');
-      var buildObserwationTowerKey = this.input.keyboard.addKey('O');
-      var buildWoodenWallKey = this.input.keyboard.addKey('W');
-      var buildStoneWallKey = this.input.keyboard.addKey('S');
+      let cursors = this.input.keyboard.createCursorKeys();
+      let attackKey = this.input.keyboard.addKey('A');
+      let finishKey = this.input.keyboard.addKey('F');
+      let leaveKey = this.input.keyboard.addKey('L');
+      let buildTownhallKey = this.input.keyboard.addKey('T');
+      let buildBarrackKey = this.input.keyboard.addKey('B');
+      let buildMineKey = this.input.keyboard.addKey('M');
+      let buildObserwationTowerKey = this.input.keyboard.addKey('O');
+      let buildWoodenWallKey = this.input.keyboard.addKey('W');
+      let buildStoneWallKey = this.input.keyboard.addKey('S');
 
 
       if (cursors.down.isDown) {
