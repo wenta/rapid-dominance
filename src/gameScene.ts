@@ -325,7 +325,7 @@ export class GameScene extends Phaser.Scene {
     const thickness = 8;
     const alpha = 1;
     const xShift = 0;
-    const pulsateThickness = 12; // Thickness of the pulsating outline
+    const pulsateThickness = (this.cameras.main.width * 0.015, this.cameras.main.height * 0.02); // Thickness of the pulsating outline
     const pulsateSpeed = 0.005; // Speed of the pulsation
 
     for (let player of this.players) {
@@ -847,7 +847,7 @@ export class GameScene extends Phaser.Scene {
     }
     this.drawBorders();
 
-    if (this.timeSinceLastIncrement + 200 < this.game.getTime()) {
+    if (this.timeSinceLastIncrement + (this.cameras.main.width * 0.25, this.cameras.main.height * 0.3333333333333333) < this.game.getTime()) {
       this.timeSinceLastIncrement = this.game.getTime();
       this.nextMove();
     }
