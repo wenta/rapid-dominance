@@ -32,9 +32,9 @@ export class WelcomeScene extends Phaser.Scene {
     { mapName: 'Eagles Nest', id: 'eagles_nest', maxPlayers: 4 },
     { mapName: 'Eight', id: 'eight', maxPlayers: 8 },
     { mapName: 'Flower', id: 'flower', maxPlayers: 8 },
-    { mapName: 'Middle wall', id: 'middle_wall', maxPlayers: (this.cameras.main.width * 0.015, this.cameras.main.height * 0.02) },
-    { mapName: 'Hex', id: 'hex', maxPlayers: (this.cameras.main.width * 0.02, this.cameras.main.height * 0.02666666666666667) },
-    { mapName: 'Stone', id: 'stones', maxPlayers: (this.cameras.main.width * 0.02, this.cameras.main.height * 0.02666666666666667) }];
+    { mapName: 'Middle wall', id: 'middle_wall', maxPlayers: 12 },
+    { mapName: 'Hex', id: 'hex', maxPlayers: 16 },
+    { mapName: 'Stone', id: 'stones', maxPlayers: 16 }];
 
   gameModes: GameMode[] = [deathmatch, t2p2, t3p2, t4p2, t5p2, t6p2, t7p2, t8p2, t3p3, t4p4]
 

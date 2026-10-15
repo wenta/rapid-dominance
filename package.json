@@ -19,11 +19,11 @@
   },
   "homepage": "https://github.com/wenta/eft#readme",
   "devDependencies": {
-    "live-server": "^1.2.1",
-    "phaser": "3.60.0",
-    "ts-loader": "^5.3.0",
-    "typescript": "^3.1.6",
-    "webpack": "^4.26.0",
-    "webpack-cli": "^3.1.2"
+    "live-server": "^1.2.2",
+    "phaser": "^3.90.0",
+    "ts-loader": "^9.6.2",
+    "typescript": "^6.0.3",
+    "webpack": "^5.111.1",
+    "webpack-cli": "^7.2.3"
   }
 }

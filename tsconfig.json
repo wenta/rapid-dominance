@@ -1,9 +1,18 @@
 {
   "compilerOptions": {
     "lib": ["es6", "dom", "es2019"],
-    "target": "es5"
+    "target": "es2020",
+    "strict": false,
+    "skipLibCheck": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false,
+    "noImplicitThis": false
   },
   "include": [
     "src/*"
+  ],
+  "exclude": [
+    "src/phaser.d.ts"
   ]
 }
