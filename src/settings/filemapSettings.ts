@@ -5,6 +5,7 @@ export const stone = 3
 export const barrack = 4
 export const tree = 5
 export const mine = 6
+export const observationTower = 7
 export const woodenWall = 8
 export const stoneWall = 10
 

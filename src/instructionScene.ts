@@ -1,5 +1,4 @@
 import { RoutingButton } from "./components/routingButton";
-import { backgroundWidth, buttonHeight, buttonWidth } from "./settings/textureSettings";
 
 export class InstructionScene extends Phaser.Scene {
     sceneWidth: number = 0
@@ -18,16 +17,20 @@ export class InstructionScene extends Phaser.Scene {
         this.sceneWidth = this.cameras.main.width;
         this.sceneHeight = this.cameras.main.height;
 
-        this.add.sprite(0, 0, 'background').setOrigin(0).setScale(this.sceneWidth / backgroundWidth);
+        this.add.sprite(0, 0, 'background').setOrigin(0).setDisplaySize(this.sceneWidth, this.sceneHeight).setTint(0x557b78).setAlpha(0.3);
+        this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, this.sceneWidth, this.sceneHeight, 0x07191a, 0.75);
 
-        const scrollArea = new Phaser.Geom.Rectangle(this.sceneWidth / 4, 50, this.sceneWidth / 2, this.sceneHeight - 100);
+        const contentWidth = Math.min(900, this.sceneWidth - 64);
+        const scrollArea = new Phaser.Geom.Rectangle((this.sceneWidth - contentWidth) / 2, 24, contentWidth, this.sceneHeight - 48);
+        this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, contentWidth + 24, this.sceneHeight - 28, 0x102728, 0.96)
+            .setStrokeStyle(1, 0x42605e, 0.95);
 
         const textStyle = {
             fontFamily: 'Arial',
-            fontSize: '24px',
-            color: '#000000',
-            align: 'justify',
-            wordWrap: { width: scrollArea.width },
+            fontSize: '18px',
+            color: '#e9e4d8',
+            lineSpacing: 7,
+            wordWrap: { width: scrollArea.width - 32 },
 
         };
 
@@ -37,10 +40,10 @@ export class InstructionScene extends Phaser.Scene {
         mask.fillRectShape(scrollArea);
 
         const container = this.add.container(scrollArea.x, scrollArea.y);
-        let goBackButton = new RoutingButton(this, buttonWidth, buttonHeight / 2, "menu_item", "Go back", 1,
+        let goBackButton = new RoutingButton(this, 110, 28, "menu_item", "← Back", 0.85,
             () => this.scene.start("WelcomeScene", {}));
 
-        const instructionText = this.add.text(0, buttonHeight, '', textStyle);
+        const instructionText = this.add.text(16, 72, '', textStyle);
         instructionText.setText(textData);
         container.add([goBackButton, instructionText]);
 

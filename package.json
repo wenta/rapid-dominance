@@ -1,23 +1,24 @@
 {
   "name": "Rapid Dominance",
   "version": "0.2.3",
-  "description": "",
+  "description": "A turn-based territory strategy game inspired by Enemy Flag.",
   "main": "webpack.config.js",
   "scripts": {
-    "build": "webpack",
-    "start": "webpack --watch & live-server --port=8085"
+    "build": "webpack --mode production",
+    "test": "tsc --ignoreConfig --noImplicitAny false --outDir /tmp/rapid-dominance-tests --module commonjs --target es2020 tests/rules.test.ts && node /tmp/rapid-dominance-tests/tests/rules.test.js",
+    "start": "webpack --watch --mode development & live-server --port=8085"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wenta/eft.git"
+    "url": "git+https://github.com/wenta/rapid-dominance.git"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/wenta/eft/issues"
+    "url": "https://github.com/wenta/rapid-dominance/issues"
   },
-  "homepage": "https://github.com/wenta/eft#readme",
+  "homepage": "https://github.com/wenta/rapid-dominance#readme",
   "devDependencies": {
     "live-server": "^1.2.2",
     "phaser": "^3.90.0",

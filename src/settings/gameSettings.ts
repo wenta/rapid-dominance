@@ -9,9 +9,11 @@ export const actionPointGainPerRoundFromOuterFields = 0.01
 export const actionPointGainPerRoundForAdditionalTownhall = 1
 
 
-export const goldGainPerRound = 5
-export const goldGainPerRoundForMine = Math.floor(Math.random() * 5 + 4) // from 4 to 8
-export const goldGainPerRoundForMineOnDeposit = Math.floor(Math.random() * 5 + 16)// from 8 to 16
+export const goldGainPerRound = 2
+export const goldGainPerRoundForMineMin = 4
+export const goldGainPerRoundForMineMax = 8
+export const goldGainPerRoundForMineOnDepositMin = 16
+export const goldGainPerRoundForMineOnDepositMax = 20
 
 export const armyGrowthAfterFailedEnemyAttacks = 0.5
 
@@ -38,7 +40,7 @@ export const barrackProductivityAlreadyOwnedBarracks = 2
 export const barrackProductivityAlreadyOwnedDamagedBarracks = 1
 
 export const initialActionPoints = 8
-export const initialActionPointsLimit = 14
+export const initialActionPointsLimit = 12
 export const actionPointLimit = 200
 export const armyLimit = 200
 export const goldLimit = 20000
@@ -48,12 +50,17 @@ export const mineGoldCost = 150
 export const woodenWallGoldCost = 100
 export const stoneWallGoldCost = 200
 export const townhallGoldCost = 500
+export const observationTowerGoldCost = 100
+export const repairGoldCostPerPoint = 25
 
 export const barrackActionPointCost = 4
 export const mineActionPointCost = 4
 export const woodenWallActionPointCost = 4
 export const stoneWallActionPointCost = 6
 export const townhallActionPointCost = 8
+export const observationTowerActionPointCost = 4
+export const repairActionPointCost = 2
+export const demolishActionPointCost = 1
 
 export const townhallResistance = 4
 export const mineResistance = 2
@@ -62,4 +69,7 @@ export const woodenWallResistance = 4
 export const stoneWallResistance = 8
 export const observationTowerResistance = 2
 export const blankFieldResistance = 1
+
+export const observationTowerVisionRange = 3
+export const damagedObservationTowerVisionRange = 2
 

@@ -13,6 +13,7 @@ export default class Player {
     experience: number
     team: number
     name: string
+    failedAttacksReceived: number
 
 
     constructor(id: number, team: number | null = null, name: string, human: boolean = false, color: number | null = null, initialGold: number = gameSettings.initalGold,
@@ -25,14 +26,15 @@ export default class Player {
         this.isHuman = human
         this.experience = 0
         this.isActive = isActive
-        this.team = team ? team : this.playerId
-        if (color) {
+        this.team = team ?? this.playerId
+        if (color !== null) {
             this.color = color
         }
         else {
             this.color = getColor(id)
         }
         this.name = name
+        this.failedAttacksReceived = 0
     }
 
     descreaseGold(amount: number) {
@@ -72,10 +74,10 @@ export default class Player {
      * @param additionalTownhall The number of additional townhalls owned by the player.
      */
     increaseActionPoints(innerFieldsByPlayer: number, outerFieldsByPlayer: number, additionalTownhall: number) {
-        let ap = Math.floor(gameSettings.actionPointGainPerRound +
-            (innerFieldsByPlayer * gameSettings.actionPointGainPerRoundFromInnerFields) +
-            (outerFieldsByPlayer * gameSettings.actionPointGainPerRoundFromOuterFields) +
-            (additionalTownhall * gameSettings.actionPointGainPerRoundForAdditionalTownhall));
+        const ap = gameSettings.actionPointGainPerRound +
+            Math.floor(innerFieldsByPlayer * gameSettings.actionPointGainPerRoundFromInnerFields) +
+            Math.floor(outerFieldsByPlayer * gameSettings.actionPointGainPerRoundFromOuterFields) +
+            Math.max(0, additionalTownhall) * gameSettings.actionPointGainPerRoundForAdditionalTownhall;
 
         if (this.actionPoints + ap < this.actionPointsLimit) {
             this.actionPoints += ap;
@@ -92,10 +94,20 @@ export default class Player {
      * @param amount The amount of experience to add.
      */
     increaseExperience(amount: number) {
+        const previousLevel = Math.floor(this.experience / 8);
         this.experience += amount;
+        const newLevel = Math.floor(this.experience / 8);
+        this.actionPointsLimit = Math.min(
+            gameSettings.actionPointLimit,
+            this.actionPointsLimit + Math.max(0, newLevel - previousLevel)
+        );
+    }
 
-        if (this.experience % 50 === 0) {
-            this.actionPointsLimit += 1;
+    registerFailedEnemyAttack() {
+        this.failedAttacksReceived += 1;
+        if (this.failedAttacksReceived >= 2) {
+            this.increaseTroops(1);
+            this.failedAttacksReceived = 0;
         }
     }
 

@@ -1,57 +1,37 @@
-1. Game Objective:
+RAPID DOMINANCE — INSTRUKCJA
 
-The objective of the game is to conquer and control as many fields as possible on the game map.
+CEL GRY
+Zniszcz wszystkie ratusze przeciwnych drużyn, jednocześnie broniąc własnych. Gracz odpada po utracie ostatniego ratusza.
 
-2. Game Setup:
+TURY I SUROWCE
+Każda czynność zużywa punkty akcji (PA). Co rundę otrzymujesz 8 PA oraz premie za kontrolowany teren i dodatkowe ratusze. Każde 8 punktów doświadczenia podnosi limit PA o jeden. Kopalnie produkują złoto, a te zbudowane na złożach są znacznie wydajniejsze. Baraki natychmiast rekrutują armię, którą zużywasz podczas ataków.
 
-At the beginning of the game, you will be presented with a tile-based game map divided into a grid of fields.
-Each field can be either empty, contain gold, or occupied by a townhall.
-You will also see a left menu, a tilemap in the center, and a right menu on the screen.
+ATAK I ZDOBYWANIE TERENU
+Zaznacz sektor i naciśnij A, kliknij Atak albo użyj prawego przycisku myszy. Cel musi stykać się krawędzią z twoim terytorium i sąsiadować z co najmniej dwoma twoimi sektorami (drugi może stykać się narożnikiem). Przy ratuszu wystarczy wspólna krawędź. Budynek lub mur trzeba zniszczyć, zanim zajmiesz sektor.
 
-3. Players:
+Pusty sektor otoczony z czterech stron twoim terytorium zostaje automatycznie przejęty bez dodatkowego kosztu PA i armii.
 
-The game can be played with multiple players, with a minimum of 2 players and a maximum of 16 players.
-Each player will be assigned a unique color and starting position on the map.
-The first player is the human player, and the rest are computer-controlled players.
+BUDYNKI
+Ratusz (T): chroni przed eliminacją i zwiększa przyrost PA.
+Kopalnia (M): produkuje złoto; na złożu daje największy przychód.
+Barak (B): natychmiast rekrutuje armię; posiadane baraki zwiększają produkcję.
+Wieża obserwacyjna (O): poszerza widoczność; uszkodzona ma mniejszy zasięg.
+Mur drewniany (W) / kamienny (S): konstrukcje obronne o rosnącej wytrzymałości.
 
-4. Gameplay:
+Klawisz R naprawia uszkodzony budynek. Klawisz D wyburza własny budynek; nie można wyburzyć ostatniego ratusza. W grze drużynowej zaznacz sektor sojusznika i naciśnij G, aby przekazać mu 50 sztuk złota.
 
-The game is played in turns, starting with the human player.
-Each turn, you have a limited number of action points that can be used to perform actions.
-Actions can include building structures or attacking other fields.
-The available actions are displayed in the right menu, and you can select an action to perform.
-Actions may require resources and have a cost in action points.
-You can only perform actions on fields that are within your control.
+MGŁA WOJNY
+Widzisz własne terytorium oraz sąsiednie sektory. Odkryte wcześniej obszary pozostają przyciemnione. Wieże obserwacyjne odsłaniają większy teren.
 
-5. Building Structures:
+STEROWANIE
+Lewy przycisk myszy: zaznacz sektor
+Prawy przycisk myszy / A: zaatakuj zaznaczony sektor
+Strzałki: przesuń zaznaczenie
+Spacja / F: zakończ turę
+L: porzuć sektor (koszt 1 PA)
+T / M / B / O / W / S: buduj
+R: napraw budynek
+D: wyburz budynek
+G: przekaż 50 złota wybranemu sojusznikowi
 
-You can build structures such as mines, barracks, wooden walls, and stone walls on empty fields.
-Structures provide various benefits, such as generating resources or defending your fields.
-Different structures require different resources and have different effects.
-
-6. Conquering Fields:
-
-To conquer an enemy field, you can attack it using your units.
-Fields can only be attacked if they are adjacent to your controlled fields.
-When attacking, you can choose the target field and initiate the attack.
-The outcome of the attack depends on the strength of your units and the defense of the target field.
-If you successfully conquer a field, it will become under your control.
-
-7. Townhalls:
-
-Townhalls are special structures that represent your main base.
-If all of your townhall are destroyed, you lose the game.
-Protect your townhalls by building defensive structures and securing your surrounding fields.
-
-8. Winning the Game:
-
-The game continues until all players except one are eliminated.
-
-9. Additional Features:
-
-The game includes additional features such as fog of war and resource management.
-Fog of war hides unexplored areas of the map, and you can uncover them by occupying more fields.
-Gold needed to build structures, so manage them wisely.
-Have Fun!
-
-Enjoy the strategic gameplay, make smart decisions, and outwit your opponents to claim victory!
+Panel akcji pokazuje koszty oraz właściciela, typ i wytrzymałość zaznaczonego sektora.

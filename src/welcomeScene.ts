@@ -1,31 +1,35 @@
 import Dropdown, { DropdownOption } from './components/dropdown';
 import { RoutingButton } from './components/routingButton';
-import GameMode, { deathmatch, t2p2, t3p2, t3p3, t4p2, t4p4, t5p2, t6p2, t7p2, t8p2 } from './gameMode';
+import GameMode, { deathmatch, t2p2, t2p3, t2p4, t2p5, t2p6, t2p7, t2p8, t3p2, t3p3, t4p2, t4p4, t5p2, t6p2, t7p2, t8p2 } from './gameMode';
 import * as filemapSettings from './settings/filemapSettings';
-import * as menuItemSettings from './settings/textureSettings';
 import { backgroundWidth, buttonHeight } from './settings/textureSettings';
+
 interface GameMaps {
-  mapName: string,
-  id: string,
-  maxPlayers: number
+  mapName: string;
+  id: string;
+  maxPlayers: number;
 }
 
 export class WelcomeScene extends Phaser.Scene {
   title: Phaser.GameObjects.Text;
-  hint: Phaser.GameObjects.Text;
-  sceneWidth: number = 0
-  sceneHeight: number = 0
-  numberOfPlayers: number = 0
-  selectedMap: string = "hex"
-  selectedGameMode: GameMode = deathmatch
-  map: Phaser.Tilemaps.Tilemap
-  tileset: Phaser.Tilemaps.Tileset
-  selectedMapDropdown: Dropdown
-  aboutButton: RoutingButton
-  instructionButton: RoutingButton
-  startButton: RoutingButton
-  numberOfPlayersDropdown: Phaser.GameObjects.Container
-  selectedModeLabel: Phaser.GameObjects.Container
+  previewTitle: Phaser.GameObjects.Text;
+  sceneWidth: number = 0;
+  sceneHeight: number = 0;
+  numberOfPlayers: number = 4;
+  selectedMap: string = "eagles_nest";
+  selectedGameMode: GameMode = deathmatch;
+  map: Phaser.Tilemaps.Tilemap;
+  tileset: Phaser.Tilemaps.Tileset;
+  previewLayer: Phaser.Tilemaps.TilemapLayer;
+
+  gameModesDropdown: Dropdown;
+  selectedMapDropdown: Dropdown;
+  aboutButton: RoutingButton;
+  instructionButton: RoutingButton;
+  startButton: RoutingButton;
+  numberOfPlayersDropdown: Dropdown;
+  selectedModeLabel: Dropdown;
+  compactLayout: boolean = false;
 
   gameMaps: GameMaps[] = [
     { mapName: 'One vs one', id: 'one_vs_one', maxPlayers: 2 },
@@ -34,10 +38,10 @@ export class WelcomeScene extends Phaser.Scene {
     { mapName: 'Flower', id: 'flower', maxPlayers: 8 },
     { mapName: 'Middle wall', id: 'middle_wall', maxPlayers: 12 },
     { mapName: 'Hex', id: 'hex', maxPlayers: 16 },
-    { mapName: 'Stone', id: 'stones', maxPlayers: 16 }];
+    { mapName: 'Stone', id: 'stones', maxPlayers: 16 }
+  ];
 
-  gameModes: GameMode[] = [deathmatch, t2p2, t3p2, t4p2, t5p2, t6p2, t7p2, t8p2, t3p3, t4p4]
-
+  gameModes: GameMode[] = [deathmatch, t2p2, t2p3, t3p2, t2p4, t4p2, t3p3, t2p5, t5p2, t2p6, t6p2, t2p7, t7p2, t2p8, t8p2, t4p4];
 
   constructor() {
     super({
@@ -50,48 +54,96 @@ export class WelcomeScene extends Phaser.Scene {
     this.load.image("menu_item", "assets/buttonLong_brown.png");
     this.load.image("background", "assets/backgroundColorDesert.png");
     this.load.image("eft_filemap", "assets/eft_filemap.png");
-    this.gameMaps.forEach(x => this.load.tilemapCSV(x.id, 'assets/' + x.id + '.csv'))
-
+    this.gameMaps.forEach(x => this.load.tilemapCSV(x.id, 'assets/' + x.id + '.csv'));
   }
 
   createFooter() {
-    let footerY = this.sceneHeight - (2 * buttonHeight)
-    this.aboutButton = new RoutingButton(this, - (menuItemSettings.buttonWidth / 2), 0, "menu_item", "About", 1,
-      () => this.scene.start("AboutScene", {}));
+    const footerY = this.sceneHeight - Math.max(38, buttonHeight * 0.8);
+    const footerScale = Phaser.Math.Clamp((this.sceneWidth - 32) / 464, 0.55, 1);
+    const footerOffset = (110 * footerScale) + 8;
+    this.aboutButton = new RoutingButton(
+      this,
+      -footerOffset,
+      0,
+      "menu_item",
+      "About",
+      footerScale,
+      () => this.scene.start("AboutScene", {})
+    );
 
+    this.instructionButton = new RoutingButton(
+      this,
+      footerOffset,
+      0,
+      "menu_item",
+      "Instruction",
+      footerScale,
+      () => this.scene.start("InstructionScene", {})
+    );
 
-    this.instructionButton = new RoutingButton(this,  (menuItemSettings.buttonWidth / 2), 0, "menu_item", "Instruction", 1,
-      () => this.scene.start("InstructionScene", {}));
-
-
-    this.add.container(0, footerY, [this.aboutButton, this.instructionButton])
-      .setScale(0.7)
-      .setX((this.sceneWidth / 2));
+    this.add.container(this.sceneWidth / 2, footerY, [this.aboutButton, this.instructionButton])
+      .setDepth(100);
   }
 
   create(): void {
     this.sceneWidth = this.cameras.main.width;
     this.sceneHeight = this.cameras.main.height;
+    this.compactLayout = this.sceneWidth < 900;
 
-    this.add.sprite(0, 0, 'background').setOrigin(0).setScale(this.sceneWidth / backgroundWidth);
+    this.add.sprite(0, 0, 'background')
+      .setOrigin(0)
+      .setScale(Math.max(this.sceneWidth / backgroundWidth, this.sceneHeight / 600))
+      .setTint(0x557b78)
+      .setAlpha(0.34);
+    this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, this.sceneWidth, this.sceneHeight, 0x07191a, 0.72).setDepth(1);
 
-    const titleText: string = "Rapid Dominance";
-    this.title = this.add.text(this.cameras.main.worldView.x + (this.sceneWidth / 2), (this.cameras.main.width * 0.125, this.cameras.main.height * 0.16666666666666666), titleText, {
+    // Centered Title with shadow
+    this.title = this.add.text(this.sceneWidth / 2, Math.max(45, this.sceneHeight * 0.09), "Rapid Dominance", {
       fontFamily: 'Arial',
-      fontSize: '38px',
-      color: '#000000',
-    }).setOrigin(0.5);
+      fontSize: `${Math.max(26, Math.min(44, this.sceneWidth * 0.055))}px`,
+      color: '#ffffff',
+      fontStyle: 'bold',
+      stroke: '#4a3319',
+      strokeThickness: 6,
+      shadow: {
+        offsetX: 2,
+        offsetY: 3,
+        color: '#000000',
+        blur: 4,
+        fill: true
+      }
+    }).setOrigin(0.5).setDepth(10);
 
+    const menuX = this.compactLayout ? this.sceneWidth / 2 : this.sceneWidth * 0.35;
+    const startY = Math.max(120, this.sceneHeight * 0.23);
+    const rowGap = Math.min(65, (this.sceneHeight * 0.55) / 4);
+    const menuCardHeight = Math.min(this.sceneHeight - 190, rowGap * 4.5);
+    this.add.rectangle(menuX, startY + menuCardHeight / 2 - 36, this.compactLayout ? Math.min(340, this.sceneWidth - 20) : 340, menuCardHeight, 0x102728, 0.94)
+      .setStrokeStyle(1, 0x42605e, 0.95).setDepth(2);
+    if (!this.compactLayout) {
+      const previewCardTop = startY - 48;
+      const previewCardBottom = this.sceneHeight - 88;
+      this.add.rectangle(this.sceneWidth * 0.76, (previewCardTop + previewCardBottom) / 2, this.sceneWidth * 0.41, previewCardBottom - previewCardTop, 0x102728, 0.94)
+        .setStrokeStyle(1, 0x42605e, 0.95).setDepth(2);
+    }
+
+    // 1. Game Mode Dropdown
     const gameModesDropdownOptions: DropdownOption[] = this.getGameModesDropdownOptions();
-    const gameModesDropdown = new Dropdown(this, (this.cameras.main.width * 0.125, this.cameras.main.height * 0.16666666666666666), (this.cameras.main.width * 0.25, this.cameras.main.height * 0.3333333333333333), "menu_item", "Game mode",
+    this.gameModesDropdown = new Dropdown(
+      this,
+      menuX,
+      startY,
+      "menu_item",
+      "Mode: " + this.selectedGameMode.name,
       gameModesDropdownOptions,
       (selectedOption: string) => {
         this.changeGameMode(selectedOption);
       }
     );
 
+    // 2. Number of Players Dropdown
     const numberOfPlayersDropdownOptions: DropdownOption[] = [];
-    for (let i = 2; i <= (this.cameras.main.width * 0.02, this.cameras.main.height * 0.02666666666666667); i++) {
+    for (let i = 2; i <= 16; i++) {
       numberOfPlayersDropdownOptions.push({
         text: `${i} players`,
         value: i.toString(),
@@ -99,53 +151,130 @@ export class WelcomeScene extends Phaser.Scene {
       });
     }
 
-    this.numberOfPlayersDropdown = new Dropdown(this, (this.cameras.main.width * 0.125, this.cameras.main.height * 0.16666666666666666), (this.cameras.main.width * 0.3125, this.cameras.main.height * 0.4166666666666667), "menu_item", "Players",
+    this.numberOfPlayersDropdown = new Dropdown(
+      this,
+      menuX,
+      startY + rowGap,
+      "menu_item",
+      `Players: ${this.numberOfPlayers} players`,
       numberOfPlayersDropdownOptions,
       (selectedOption: string) => {
         this.numberOfPlayers = parseInt(selectedOption);
+        this.numberOfPlayersDropdown.setLabelText(`Players: ${this.numberOfPlayers} players`);
         this.generateMapOptions();
+        this.updateStartButtonState();
       }
     );
-    this.selectedModeLabel = new Dropdown(this, (this.cameras.main.width * 0.125, this.cameras.main.height * 0.16666666666666666), (this.cameras.main.width * 0.3125, this.cameras.main.height * 0.4166666666666667), "menu_item", this.selectedGameMode.name,
-      [], () => { }
-    );
 
-    this.selectedMapDropdown = new Dropdown(this, (this.cameras.main.width * 0.125, this.cameras.main.height * 0.16666666666666666), (this.cameras.main.width * 0.375, this.cameras.main.height * 0.5), "menu_item", "Map",
+    // Label for non-deathmatch fixed players
+    this.selectedModeLabel = new Dropdown(
+      this,
+      menuX,
+      startY + rowGap,
+      "menu_item",
+      this.selectedGameMode.name,
+      [],
+      () => { }
+    );
+    this.selectedModeLabel.setVisible(false);
+
+    // 3. Map Dropdown
+    this.selectedMapDropdown = new Dropdown(
+      this,
+      menuX,
+      startY + (2 * rowGap),
+      "menu_item",
+      "Map: Eagles Nest",
       [],
       (selectedOption: string) => {
         this.selectedMap = selectedOption;
+        const found = this.gameMaps.find(m => m.id === selectedOption);
+        if (found) {
+          this.selectedMapDropdown.setLabelText(`Map: ${found.mapName}`);
+        }
+        this.changeMap();
+        this.updateStartButtonState();
       }
     );
 
-    const mapDropdown = this.selectedMapDropdown;
-
-    this.startButton = new RoutingButton(this, (this.cameras.main.width * 0.0625, this.cameras.main.height * 0.08333333333333333), 0, "menu_item", "Start", 1,
+    // 4. Start Button
+    this.startButton = new RoutingButton(
+      this,
+      menuX,
+      startY + (3.3 * rowGap),
+      "menu_item",
+      ">> START GAME <<",
+      1,
       () => {
         if (this.numberOfPlayers !== 0 && this.selectedMap !== "") {
-          this.scene.start("GameScene", { selectedMap: this.selectedMap, numberOfPlayers: this.numberOfPlayers, selectedGameMode: this.selectedGameMode });
+          this.scene.start("GameScene", {
+            selectedMap: this.selectedMap,
+            numberOfPlayers: this.numberOfPlayers,
+            selectedGameMode: this.selectedGameMode
+          });
         }
       }
     );
+    this.startButton.setDepth(100);
 
-    this.add.container(0, 0, mapDropdown);
-    this.add.container(0, (this.cameras.main.width * 0.4375, this.cameras.main.height * 0.5833333333333334), this.startButton);
-    this.add.container(0, 0, this.selectedModeLabel);
-    this.add.container(0, 0, this.numberOfPlayersDropdown);
-    this.add.container(0, 0, gameModesDropdown);
+    // Map preview title on right
+    this.previewTitle = this.add.text(this.sceneWidth * 0.72, startY - 20, "Map Preview", {
+      fontFamily: 'Arial',
+      fontSize: '20px',
+      color: '#f2d6a2',
+      fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(10).setVisible(!this.compactLayout);
+
     this.createFooter();
+    this.generateMapOptions();
     this.changeMap();
+    this.updateStartButtonState();
+  }
+
+  updateStartButtonState() {
+    const isReady = this.numberOfPlayers > 0 && this.selectedMap !== "";
+    if (this.startButton) {
+      this.startButton.setEnabled(isReady);
+    }
   }
 
   changeMap() {
-    this.map = this.make.tilemap({ key: this.selectedMap, tileWidth: filemapSettings.tileWidth, tileHeight: filemapSettings.tileHeight })
-    this.tileset = this.map.addTilesetImage('eft_filemap', undefined, filemapSettings.tileWidth, filemapSettings.tileHeight, -2, -2)
+    if (this.previewLayer) {
+      this.previewLayer.destroy();
+    }
 
-    if (this.tileset) {
-      let layer = this.map.createLayer(0, this.tileset, this.title.x - (this.tileset.tileWidth * 2), (this.cameras.main.width * 0.25, this.cameras.main.height * 0.3333333333333333))
-      if (layer) {
-        layer.setScale(0.2);
-        layer.setAlpha(0.9)
+    this.map = this.make.tilemap({
+      key: this.selectedMap,
+      tileWidth: filemapSettings.tileWidth,
+      tileHeight: filemapSettings.tileHeight
+    });
+
+    this.tileset = this.map.addTilesetImage('eft_filemap', undefined, filemapSettings.tileWidth, filemapSettings.tileHeight, -2, -2);
+
+    if (this.tileset && !this.compactLayout) {
+      const previewAreaLeft = this.sceneWidth * 0.56;
+      const previewAreaRight = this.sceneWidth * 0.96;
+      const previewY = Math.max(120, this.sceneHeight * 0.26);
+      const previewBottom = this.sceneHeight - Math.max(90, buttonHeight * 1.8);
+      const availableWidth = Math.max(120, previewAreaRight - previewAreaLeft);
+      const availableHeight = Math.max(120, previewBottom - previewY);
+      const previewScale = Math.min(
+        availableWidth / this.map.widthInPixels,
+        availableHeight / this.map.heightInPixels,
+        0.28
+      );
+      const previewX = previewAreaLeft + ((availableWidth - this.map.widthInPixels * previewScale) / 2);
+      this.previewLayer = this.map.createLayer(0, this.tileset, previewX, previewY);
+      if (this.previewLayer) {
+        this.previewLayer.setScale(previewScale);
+        this.previewLayer.setAlpha(0.95);
+        this.previewLayer.setDepth(5);
       }
+    }
+
+    const currentMap = this.gameMaps.find(m => m.id === this.selectedMap);
+    if (this.previewTitle && currentMap) {
+      this.previewTitle.setText(`Map: ${currentMap.mapName} (Max: ${currentMap.maxPlayers}p)`);
     }
   }
 
@@ -161,40 +290,55 @@ export class WelcomeScene extends Phaser.Scene {
     const gm = this.gameModes.find(x => x.name === option);
     if (gm) {
       this.selectedGameMode = gm;
+      this.gameModesDropdown.setLabelText("Mode: " + gm.name);
+
       if (gm === deathmatch) {
         this.selectedModeLabel.setVisible(false);
         this.numberOfPlayersDropdown.setVisible(true);
       } else {
         this.selectedModeLabel.setVisible(true);
+        this.selectedModeLabel.setLabelText(this.selectedGameMode.name);
         this.numberOfPlayersDropdown.setVisible(false);
-        this.selectedModeLabel.destroy();
-        this.selectedModeLabel = this.add.container(0, 0, new Dropdown(this, (this.cameras.main.width * 0.125, this.cameras.main.height * 0.16666666666666666), (this.cameras.main.width * 0.3125, this.cameras.main.height * 0.4166666666666667), "menu_item", this.selectedGameMode.name,
-          [], () => { }
-        ));
       }
       this.numberOfPlayers = this.selectedGameMode.getMaxNumberOfPlayers();
       this.generateMapOptions();
+      this.updateStartButtonState();
     }
   }
 
-
   generateMapOptions(): void {
-    let opts = this.gameMaps
+    const opts = this.gameMaps
       .filter(map => map.maxPlayers >= this.numberOfPlayers)
-      .map(map =>
-      ({
-        text: map.mapName,
+      .map(map => ({
+        text: `${map.mapName} (≤${map.maxPlayers}p)`,
         value: map.id,
         image: "menu_item"
       }));
+
     this.selectedMapDropdown.updateOptions(this, opts, (selectedOption: string) => {
       this.selectedMap = selectedOption;
+      const found = this.gameMaps.find(m => m.id === selectedOption);
+      if (found) {
+        this.selectedMapDropdown.setLabelText(`Map: ${found.mapName}`);
+      }
       this.changeMap();
+      this.updateStartButtonState();
     });
+
+    // If current selected map doesn't fit current player count, switch to first compatible map
+    const isCurrentMapValid = opts.some(o => o.value === this.selectedMap);
+    if (!isCurrentMapValid && opts.length > 0) {
+      this.selectedMap = opts[0].value;
+      this.selectedMapDropdown.setLabelText(`Map: ${opts[0].text}`);
+      this.changeMap();
+    } else {
+      const found = this.gameMaps.find(m => m.id === this.selectedMap);
+      if (found) {
+        this.selectedMapDropdown.setLabelText(`Map: ${found.mapName}`);
+      }
+    }
   }
 
   update(time: number, delta: number): void {
-
   }
-
-};
+}

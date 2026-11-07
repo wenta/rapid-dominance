@@ -1,57 +1,37 @@
-1. Game Objective:
+RAPID DOMINANCE — HOW TO PLAY
 
-The objective of the game is to conquer and control as many fields as possible on the game map.
+OBJECTIVE
+Destroy every enemy team's townhalls while protecting your own. A player is eliminated after losing their final townhall.
 
-2. Game Setup:
+TURNS AND RESOURCES
+Every action uses action points (AP). You receive 8 AP per round, plus bonuses for controlled land and additional townhalls. Every 8 experience points raises your AP limit by one. Mines generate gold; mines built on gold deposits are much more productive. Barracks immediately recruit troops, which are spent when attacking.
 
-At the beginning of the game, you will be presented with a tile-based game map divided into a grid of fields.
-Each field can be either empty, contain gold, or occupied by a townhall.
-You will also see a left menu, a tilemap in the center, and a right menu on the screen.
+ATTACKING AND CAPTURING
+Select a sector and press A, click Attack, or right-click it. The target must share an edge with your territory and touch at least two of your sectors (corners count for the second sector). A sector next to your townhall only needs the shared edge. Buildings and walls must be destroyed before their sector can be captured.
 
-3. Players:
+An empty sector surrounded on all four edges by your territory is annexed automatically. This costs no additional AP or troops.
 
-The game can be played with multiple players, with a minimum of 2 players and a maximum of 16 players.
-Each player will be assigned a unique color and starting position on the map.
-The first player is the human player, and the rest are computer-controlled players.
+BUILDINGS
+Townhall (T): protects you from elimination and increases AP income.
+Mine (M): generates gold every round; deposits yield the most.
+Barrack (B): immediately recruits troops; existing barracks improve recruitment.
+Observation tower (O): expands fog-of-war vision; a damaged tower has less range.
+Wooden wall (W) / Stone wall (S): defensive structures with increasing resistance.
 
-4. Gameplay:
+Repair a damaged building with R. Demolish one of your buildings with D; your final townhall cannot be demolished. In team games, select an ally's sector and press G to send 50 gold.
 
-The game is played in turns, starting with the human player.
-Each turn, you have a limited number of action points that can be used to perform actions.
-Actions can include building structures or attacking other fields.
-The available actions are displayed in the right menu, and you can select an action to perform.
-Actions may require resources and have a cost in action points.
-You can only perform actions on fields that are within your control.
+FOG OF WAR
+Your territory and nearby sectors are visible. Previously explored sectors remain dimly visible. Observation towers reveal a wider area.
 
-5. Building Structures:
+CONTROLS
+Left click: select sector
+Right click / A: attack selected sector
+Arrow keys: move selection
+Space / F: end turn
+L: abandon sector (costs 1 AP)
+T / M / B / O / W / S: build
+R: repair building
+D: demolish building
+G: transfer 50 gold to the selected ally
 
-You can build structures such as mines, barracks, wooden walls, and stone walls on empty fields.
-Structures provide various benefits, such as generating resources or defending your fields.
-Different structures require different resources and have different effects.
-
-6. Conquering Fields:
-
-To conquer an enemy field, you can attack it using your units.
-Fields can only be attacked if they are adjacent to your controlled fields.
-When attacking, you can choose the target field and initiate the attack.
-The outcome of the attack depends on the strength of your units and the defense of the target field.
-If you successfully conquer a field, it will become under your control.
-
-7. Townhalls:
-
-Townhalls are special structures that represent your main base.
-If all of your townhall are destroyed, you lose the game.
-Protect your townhalls by building defensive structures and securing your surrounding fields.
-
-8. Winning the Game:
-
-The game continues until all players except one are eliminated.
-
-9. Additional Features:
-
-The game includes additional features such as fog of war and resource management.
-Fog of war hides unexplored areas of the map, and you can uncover them by occupying more fields.
-Gold needed to build structures, so manage them wisely.
-Have Fun!
-
-Enjoy the strategic gameplay, make smart decisions, and outwit your opponents to claim victory!
+The action panel shows building costs and the selected sector's owner, type and resistance.

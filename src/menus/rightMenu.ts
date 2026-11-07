@@ -1,115 +1,189 @@
-import { Actions } from '../actions';
-import { ActionButton } from '../components/actionButton';
-import { MenuLabel } from '../components/menuLabel';
-import * as gameSettings from '../settings/gameSettings';
+import { Actions } from "../actions";
+import { ActionButton } from "../components/actionButton";
+import { MenuLabel } from "../components/menuLabel";
+import * as gameSettings from "../settings/gameSettings";
 
 export default class RightMenu extends Phaser.GameObjects.Container {
-    private actionPointsLabel: MenuLabel
-    private goldAmountLabel: MenuLabel
-    private troopsAmountLabel: MenuLabel
-    private experiencePointsLabel: MenuLabel
-    private landControlledLabel: MenuLabel
+    private actionPointsLabel: MenuLabel;
+    private goldAmountLabel: MenuLabel;
+    private troopsAmountLabel: MenuLabel;
+    private experiencePointsLabel: MenuLabel;
+    private landControlledLabel: MenuLabel;
+    private tileInfoLabel: MenuLabel;
+    private turnText: Phaser.GameObjects.Text;
 
-    private attackButton: ActionButton
-    private leaveButton: ActionButton
-    private finishButton: ActionButton
+    private attackButton: ActionButton;
+    private leaveButton: ActionButton;
+    private finishButton: ActionButton;
+    private buildTownhallButton: ActionButton;
+    private buildMineButton: ActionButton;
+    private buildBarracksButton: ActionButton;
+    private buildObservationTowerButton: ActionButton;
+    private buildWoodenWallButton: ActionButton;
+    private buildStoneWallButton: ActionButton;
+    private repairButton: ActionButton;
+    private demolishButton: ActionButton;
+    private transferGoldButton: ActionButton;
+    private actionButtons: ActionButton[];
+    private currentGold = 0;
+    private currentAp = 0;
+    private currentTroops = 0;
 
-    private buildTownhallButton: ActionButton
-    private buildMineButton: ActionButton
-    private buildBarracksButton: ActionButton
-    private buildObserwationTowerButton: ActionButton
-    private buildWoddenWallButton: ActionButton
-    private buildStoneWallButton: ActionButton
+    constructor(scene: Phaser.Scene, x: number, y: number, width: number, height: number, action: (x: Actions) => void, onMenu: () => void) {
+        super(scene, x, y);
+        scene.add.existing(this);
 
-    private worldX: number
+        const padding = 14;
+        const gap = 8;
+        const innerWidth = width - padding * 2;
+        const background = scene.add.rectangle(width / 2, height / 2, width, height, 0x102728, 0.96)
+            .setStrokeStyle(1, 0x42605e, 0.95);
+        const title = scene.add.text(padding, 13, "COMMAND", {
+            fontFamily: "Arial, sans-serif",
+            fontSize: "18px",
+            color: "#f2d6a2",
+            fontStyle: "bold",
+            letterSpacing: 2
+        });
+        this.turnText = scene.add.text(padding, 38, "Preparing turn…", {
+            fontFamily: "Arial, sans-serif",
+            fontSize: "11px",
+            color: "#88a29f"
+        });
+        const menuButton = scene.add.text(width - padding, 20, "MENU  ·  ESC", {
+            fontFamily: "Arial, sans-serif",
+            fontSize: "10px",
+            color: "#d9a561",
+            fontStyle: "bold",
+            backgroundColor: "#1b3333",
+            padding: { x: 7, y: 5 }
+        }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
+        menuButton.on("pointerover", () => menuButton.setColor("#fff0d2"));
+        menuButton.on("pointerout", () => menuButton.setColor("#d9a561"));
+        menuButton.on("pointerdown", onMenu);
+        this.add([background, title, this.turnText, menuButton]);
 
-    constructor(scene: Phaser.Scene, x: number, y: number, width: number, worldX: number, worldY: number, texture: string, tint: number = 0xffffff,
-        verticalMargin: number = 40, buttonScale: number = 3, action: (x: Actions) => void) {
+        const threeColumnWidth = (innerWidth - gap * 2) / 3;
+        this.actionPointsLabel = new MenuLabel(scene, padding + threeColumnWidth / 2, 82, threeColumnWidth, 48, "Action points", "8 / 12");
+        this.goldAmountLabel = new MenuLabel(scene, padding + threeColumnWidth * 1.5 + gap, 82, threeColumnWidth, 48, "Gold", "300");
+        this.troopsAmountLabel = new MenuLabel(scene, padding + threeColumnWidth * 2.5 + gap * 2, 82, threeColumnWidth, 48, "Troops", "10");
 
-        super(scene, x, y)
-        const xPosition = x + width * 0.75
+        const twoColumnWidth = (innerWidth - gap) / 2;
+        this.experiencePointsLabel = new MenuLabel(scene, padding + twoColumnWidth / 2, 138, twoColumnWidth, 48, "Experience", "0 XP");
+        this.landControlledLabel = new MenuLabel(scene, padding + twoColumnWidth * 1.5 + gap, 138, twoColumnWidth, 48, "Territory", "1 sector");
+        this.tileInfoLabel = new MenuLabel(scene, padding + innerWidth / 2, 194, innerWidth, 48, "Selected sector", "Choose a tile on the map");
+        this.add([
+            this.actionPointsLabel,
+            this.goldAmountLabel,
+            this.troopsAmountLabel,
+            this.experiencePointsLabel,
+            this.landControlledLabel,
+            this.tileInfoLabel
+        ]);
 
-        this.worldX = worldX
+        const sectionStyle = {
+            fontFamily: "Arial, sans-serif",
+            fontSize: "10px",
+            color: "#75928f",
+            fontStyle: "bold"
+        };
+        const buttonHeight = Math.max(26, Math.min(40, (height - 373) / 7));
+        const actionTitleY = 225;
+        this.add(scene.add.text(padding, actionTitleY, "TURN ACTIONS", sectionStyle));
 
-        this.actionPointsLabel = new MenuLabel(scene, xPosition, y, texture, gameSettings.initialActionPointsLimit + "/" + gameSettings.initialActionPointsLimit + " ap", buttonScale)
-        this.goldAmountLabel = new MenuLabel(scene, xPosition, y + (verticalMargin * buttonScale), texture, gameSettings.initalGold + " gold ", buttonScale)
-        this.troopsAmountLabel = new MenuLabel(scene, xPosition, y + (2 * verticalMargin * buttonScale), texture, gameSettings.initalTroops + " troops", buttonScale)
-        this.experiencePointsLabel = new MenuLabel(scene, xPosition, y + (3 * verticalMargin * buttonScale), texture, "0 exp", buttonScale)
-        this.landControlledLabel = new MenuLabel(scene, xPosition, y + (4 * verticalMargin * buttonScale), texture, "0 land", buttonScale)
+        const actionY = actionTitleY + 28 + buttonHeight / 2;
+        const attackWidth = innerWidth * 0.62;
+        const leaveWidth = innerWidth - attackWidth - gap;
+        this.attackButton = new ActionButton(scene, padding + attackWidth / 2, actionY, attackWidth, buttonHeight, "Attack  [A]  ·  2 AP / 1 troop", Actions.Attack, action, "primary");
+        this.leaveButton = new ActionButton(scene, padding + attackWidth + gap + leaveWidth / 2, actionY, leaveWidth, buttonHeight, "Leave  [L]", Actions.Leave, action, "danger");
+        const endTurnY = actionY + buttonHeight + gap;
+        this.finishButton = new ActionButton(scene, padding + innerWidth / 2, endTurnY, innerWidth, buttonHeight, "END TURN  ·  SPACE / F", Actions.Finish, action, "success");
 
-        this.attackButton = new ActionButton(scene, xPosition, y + (6 * verticalMargin * buttonScale), texture, "Attack (A)", buttonScale, Actions.Attack, action)
-        this.leaveButton = new ActionButton(scene, xPosition, y + 7 * verticalMargin * buttonScale, texture, "Leave  (L)", buttonScale, Actions.Leave, action)
-        this.finishButton = new ActionButton(scene, xPosition, y + 8 * verticalMargin * buttonScale, texture, "Finish (F)", buttonScale, Actions.Finish, action)
+        const buildingTitleY = endTurnY + buttonHeight / 2 + 17;
+        this.add(scene.add.text(padding, buildingTitleY, "CONSTRUCTION", sectionStyle));
+        const gridWidth = (innerWidth - gap) / 2;
+        const firstGridY = buildingTitleY + 27 + buttonHeight / 2;
+        const leftX = padding + gridWidth / 2;
+        const rightX = padding + gridWidth * 1.5 + gap;
+        const gridStep = buttonHeight + gap;
+        this.buildTownhallButton = new ActionButton(scene, leftX, firstGridY, gridWidth, buttonHeight, "Townhall [T]  ·  500G / 8AP", Actions.Townhall, action);
+        this.buildMineButton = new ActionButton(scene, rightX, firstGridY, gridWidth, buttonHeight, "Mine [M]  ·  150G / 4AP", Actions.Mine, action);
+        this.buildBarracksButton = new ActionButton(scene, leftX, firstGridY + gridStep, gridWidth, buttonHeight, "Barrack [B]  ·  100G / 4AP", Actions.Barrack, action);
+        this.buildObservationTowerButton = new ActionButton(scene, rightX, firstGridY + gridStep, gridWidth, buttonHeight, "Tower [O]  ·  100G / 4AP", Actions.ObservationTower, action);
+        this.buildWoodenWallButton = new ActionButton(scene, leftX, firstGridY + gridStep * 2, gridWidth, buttonHeight, "Wood wall [W]  ·  100G / 4AP", Actions.WoodenWall, action);
+        this.buildStoneWallButton = new ActionButton(scene, rightX, firstGridY + gridStep * 2, gridWidth, buttonHeight, "Stone wall [S]  ·  200G / 6AP", Actions.StoneWall, action);
 
-        this.buildTownhallButton = new ActionButton(scene, xPosition, y + 10 * verticalMargin * buttonScale, texture, "Townhall (T)", buttonScale, Actions.Townhall, action)
-        this.buildMineButton = new ActionButton(scene, xPosition, y + 11 * verticalMargin * buttonScale, texture, "Mine (M)", buttonScale, Actions.Mine, action)
-        this.buildBarracksButton = new ActionButton(scene, xPosition, y + 12 * verticalMargin * buttonScale, texture, "Barrack (B)", buttonScale, Actions.Barrack, action)
-        this.buildObserwationTowerButton = new ActionButton(scene, xPosition, y + 15 * verticalMargin * buttonScale, texture, "Obserwation Tower (O)", buttonScale, Actions.ObserwationTower, action)
-        this.buildWoddenWallButton = new ActionButton(scene, xPosition, y + 14 * verticalMargin * buttonScale, texture, "Wooden wall (W)", buttonScale, Actions.WoodenWall, action)
-        this.buildStoneWallButton = new ActionButton(scene, xPosition, y + 13 * verticalMargin * buttonScale, texture, "Stone wall (S)", buttonScale, Actions.StoneWall, action)
+        const managementTitleY = firstGridY + gridStep * 2 + buttonHeight / 2 + 17;
+        this.add(scene.add.text(padding, managementTitleY, "MANAGEMENT", sectionStyle));
+        const manageY = managementTitleY + 27 + buttonHeight / 2;
+        this.repairButton = new ActionButton(scene, leftX, manageY, gridWidth, buttonHeight, "Repair [R]  ·  25G+ / 2AP", Actions.Repair, action);
+        this.demolishButton = new ActionButton(scene, rightX, manageY, gridWidth, buttonHeight, "Demolish [D]  ·  1AP", Actions.Demolish, action, "danger");
+        this.transferGoldButton = new ActionButton(scene, padding + innerWidth / 2, manageY + gridStep, innerWidth, buttonHeight, "Send ally 50 gold  [G]", Actions.TransferGold, action);
 
-        this.add(this.actionPointsLabel)
-        this.add(this.goldAmountLabel)
-        this.add(this.troopsAmountLabel)
-        this.add(this.experiencePointsLabel)
-        this.add(this.landControlledLabel)
-
-        this.add(this.attackButton)
-        this.add(this.leaveButton)
-        this.add(this.finishButton)
-
-        this.add(this.buildTownhallButton)
-        this.add(this.buildMineButton)
-        this.add(this.buildBarracksButton)
-        //        this.add(this.buildObserwationTowerButton)
-        this.add(this.buildWoddenWallButton)
-        this.add(this.buildStoneWallButton)
-
+        this.actionButtons = [
+            this.attackButton, this.leaveButton, this.finishButton,
+            this.buildTownhallButton, this.buildMineButton, this.buildBarracksButton,
+            this.buildObservationTowerButton, this.buildWoodenWallButton, this.buildStoneWallButton,
+            this.repairButton, this.demolishButton, this.transferGoldButton
+        ];
+        this.add(this.actionButtons);
     }
 
-    updateTroopsAmount(amount: number) {
-        this.troopsAmountLabel.updateText(amount + " troops");
+    updateCurrentPlayer(name: string, team: number, isHuman: boolean, round: number) {
+        this.turnText.setText(`ROUND ${round}  •  ${isHuman ? "YOUR TURN" : "AI TURN"}  •  ${name}  •  TEAM ${team}`);
+        this.turnText.setColor(isHuman ? "#e6b76a" : "#88a29f");
     }
 
-    updateGoldAmount(amount: number) {
-        this.goldAmountLabel.updateText(amount + " gold");
+    updateTroopsAmount(amount: number) { this.troopsAmountLabel.updateText(String(amount)); }
+    updateGoldAmount(amount: number) { this.goldAmountLabel.updateText(String(amount)); }
+    updateActionPoints(amount: number, limit: number) { this.actionPointsLabel.updateText(`${amount} / ${Math.trunc(limit)}`); }
+    updateExperience(amount: number) { this.experiencePointsLabel.updateText(`${Math.trunc(amount)} XP`); }
+    updateControlledLand(amount: number) { this.landControlledLabel.updateText(`${amount} ${amount === 1 ? "sector" : "sectors"}`); }
+    updateTileInfo(text: string) { this.tileInfoLabel.updateText(text); }
+
+    updateAffordability(gold: number, ap: number, troops: number) {
+        this.currentGold = gold;
+        this.currentAp = ap;
+        this.currentTroops = troops;
+        this.attackButton.setEnabled(ap >= gameSettings.fieldAttackAPCost && troops > 0);
+        this.leaveButton.setEnabled(ap >= gameSettings.fieldLeaveAPCost);
+        this.finishButton.setEnabled(true);
+        this.buildTownhallButton.setEnabled(gold >= gameSettings.townhallGoldCost && ap >= gameSettings.townhallActionPointCost);
+        this.buildMineButton.setEnabled(gold >= gameSettings.mineGoldCost && ap >= gameSettings.mineActionPointCost);
+        this.buildBarracksButton.setEnabled(gold >= gameSettings.barrackGoldCost && ap >= gameSettings.barrackActionPointCost);
+        this.buildObservationTowerButton.setEnabled(gold >= gameSettings.observationTowerGoldCost && ap >= gameSettings.observationTowerActionPointCost);
+        this.buildStoneWallButton.setEnabled(gold >= gameSettings.stoneWallGoldCost && ap >= gameSettings.stoneWallActionPointCost);
+        this.buildWoodenWallButton.setEnabled(gold >= gameSettings.woodenWallGoldCost && ap >= gameSettings.woodenWallActionPointCost);
+        this.repairButton.setEnabled(gold >= gameSettings.repairGoldCostPerPoint && ap >= gameSettings.repairActionPointCost);
+        this.demolishButton.setEnabled(ap >= gameSettings.demolishActionPointCost);
+        this.transferGoldButton.setEnabled(gold >= 50);
     }
 
-    updateActionPoints(amount: number, limit: number) {
-        this.actionPointsLabel.updateText(amount + "/" + Math.trunc(limit) + " ap");
-    }
-
-    updateExperience(amount: number) {
-        this.experiencePointsLabel.updateText(Math.trunc(amount) + " exp");
-    }
-
-    updateControlledLand(amount: number) {
-        this.landControlledLabel.updateText(amount + " land");
+    updateContextAvailability(context: {
+        attack: boolean;
+        leave: boolean;
+        build: boolean;
+        repair: boolean;
+        demolish: boolean;
+        transfer: boolean;
+        humanTurn: boolean;
+    }) {
+        const active = context.humanTurn;
+        this.attackButton.setEnabled(active && context.attack && this.currentAp >= gameSettings.fieldAttackAPCost && this.currentTroops > 0);
+        this.leaveButton.setEnabled(active && context.leave && this.currentAp >= gameSettings.fieldLeaveAPCost);
+        this.finishButton.setEnabled(active);
+        this.buildTownhallButton.setEnabled(active && context.build && this.currentGold >= gameSettings.townhallGoldCost && this.currentAp >= gameSettings.townhallActionPointCost);
+        this.buildMineButton.setEnabled(active && context.build && this.currentGold >= gameSettings.mineGoldCost && this.currentAp >= gameSettings.mineActionPointCost);
+        this.buildBarracksButton.setEnabled(active && context.build && this.currentGold >= gameSettings.barrackGoldCost && this.currentAp >= gameSettings.barrackActionPointCost);
+        this.buildObservationTowerButton.setEnabled(active && context.build && this.currentGold >= gameSettings.observationTowerGoldCost && this.currentAp >= gameSettings.observationTowerActionPointCost);
+        this.buildStoneWallButton.setEnabled(active && context.build && this.currentGold >= gameSettings.stoneWallGoldCost && this.currentAp >= gameSettings.stoneWallActionPointCost);
+        this.buildWoodenWallButton.setEnabled(active && context.build && this.currentGold >= gameSettings.woodenWallGoldCost && this.currentAp >= gameSettings.woodenWallActionPointCost);
+        this.repairButton.setEnabled(active && context.repair && this.currentGold >= gameSettings.repairGoldCostPerPoint && this.currentAp >= gameSettings.repairActionPointCost);
+        this.demolishButton.setEnabled(active && context.demolish && this.currentAp >= gameSettings.demolishActionPointCost);
+        this.transferGoldButton.setEnabled(active && context.transfer && this.currentGold >= 50);
     }
 
     showPlayerActionsAndBuilding(show: Boolean) {
-        if (show) {
-            this.attackButton.visible = true
-            this.leaveButton.visible = true
-            this.finishButton.visible = true
-            this.buildTownhallButton.visible = true
-            this.buildMineButton.visible = true
-            this.buildBarracksButton.visible = true
-            this.buildObserwationTowerButton.visible = true
-            this.buildWoddenWallButton.visible = true
-            this.buildStoneWallButton.visible = true
-
-        }
-        else {
-            this.attackButton.visible = false
-            this.leaveButton.visible = false
-            this.finishButton.visible = false
-            this.buildTownhallButton.visible = false
-            this.buildMineButton.visible = false
-            this.buildBarracksButton.visible = false
-            this.buildObserwationTowerButton.visible = false
-            this.buildWoddenWallButton.visible = false
-            this.buildStoneWallButton.visible = false
-        }
+        this.actionButtons.forEach(button => button.setAlpha(show ? 1 : 0.38));
     }
 }

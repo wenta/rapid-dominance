@@ -4,7 +4,10 @@ export enum Actions {
     Barrack,
     WoodenWall,
     StoneWall,
-    ObserwationTower,
+    ObservationTower,
+    Repair,
+    Demolish,
+    TransferGold,
     Attack,
     Leave,
     Finish

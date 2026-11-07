@@ -51,10 +51,10 @@ export default class Fields {
         const bottomField = this.fields[y + 1]?.[x];
         const leftField = this.fields[y]?.[x - 1];
         const rightField = this.fields[y]?.[x + 1];
-        return ((topField && topField.player === player) || topField === undefined) &&
-            ((bottomField && bottomField.player === player) || bottomField === undefined) &&
-            ((leftField && leftField.player === player) || leftField === undefined) &&
-            ((rightField && rightField.player === player) || rightField === undefined) &&
+        return !!topField && topField.player === player &&
+            !!bottomField && bottomField.player === player &&
+            !!leftField && leftField.player === player &&
+            !!rightField && rightField.player === player &&
             (field.typeField === filemapSettings.blank || field.typeField === filemapSettings.goldDeposit)
     }
 
@@ -277,7 +277,7 @@ export default class Fields {
      * @param field The field to check for neighboring fields.
      * @returns An array of neighboring fields within the range.
      */
-    private listNeighboringFieldsInRange(range: number, field: Field): Field[] {
+    listNeighboringFieldsInRange(range: number, field: Field): Field[] {
         const neighboringFields: Field[] = [];
         const x = field.x;
         const y = field.y;
