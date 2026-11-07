@@ -3,6 +3,10 @@ import Fields from "../src/fields";
 import Player from "../src/player";
 import { GAME_SAVE_VERSION, isGameSnapshot } from "../src/gameSave";
 import { chooseFrontierBuildField, chooseSafestBuildField, rankAttackTargets } from "../src/botStrategy";
+import { getBuildingTileIndex } from "../src/buildingAppearance";
+import * as gameSettings from "../src/settings/gameSettings";
+import { applyDevStartingResources, devInitialActionPoints, devInitialGold } from "../src/devMode";
+import { calculateWallConnectionMask, getConnectedWallTileIndex, wallConnectionBits, WALL_TILESET_FIRST_GID, WALL_VARIANTS_PER_DAMAGE_LEVEL } from "../src/wallConnections";
 import * as filemapSettings from "../src/settings/filemapSettings";
 
 function assert(condition: boolean, message: string) {
@@ -99,6 +103,60 @@ function testBotBuildPlacement() {
     assert(chooseFrontierBuildField([safe, exposed], danger) === exposed, "defensive buildings should prefer exposed sectors");
 }
 
+function testBuildingDamageAppearance() {
+    assert(
+        getBuildingTileIndex(filemapSettings.townhall, gameSettings.townhallResistance) === filemapSettings.townhall,
+        "an undamaged building must use its base tile"
+    );
+    assert(
+        getBuildingTileIndex(filemapSettings.townhall, 3) === filemapSettings.damagedTownhall,
+        "a partially damaged townhall must use the damaged tile"
+    );
+    assert(
+        getBuildingTileIndex(filemapSettings.townhall, 2) === filemapSettings.criticalTownhall,
+        "a heavily damaged townhall must use the critical tile"
+    );
+    assert(
+        getBuildingTileIndex(filemapSettings.stoneWall, 4) === filemapSettings.criticalStoneWall,
+        "stone walls at half health must show a major breach"
+    );
+}
+
+function testDevStartingResources() {
+    const player = new Player(0, 1, "Developer", true);
+    applyDevStartingResources(player);
+    assert(player.gold === devInitialGold, "dev mode must grant 10,000 starting gold");
+    assert(player.actionPoints === devInitialActionPoints, "dev mode must grant 100 starting action points");
+    assert(player.actionPointsLimit >= devInitialActionPoints, "dev action points must fit within the displayed limit");
+}
+
+function testConnectedWallMasks() {
+    const center = new Field(1, 1, true, false, 0, filemapSettings.woodenWall, false, 4);
+    const fields = new Map<string, Field>();
+    const put = (field: Field) => fields.set(`${field.x}:${field.y}`, field);
+    put(center);
+    put(new Field(1, 0, true, false, 0, filemapSettings.woodenWall, false, 4));
+    put(new Field(2, 1, true, false, 0, filemapSettings.stoneWall, false, 8));
+    put(new Field(0, 1, true, false, 0, filemapSettings.woodenWall, false, 4));
+    const mask = calculateWallConnectionMask(center, (x, y) => fields.get(`${x}:${y}`));
+    assert(
+        mask === (wallConnectionBits.north | wallConnectionBits.east | wallConnectionBits.west),
+        "wall masks must include every orthogonally adjacent wall, including another material"
+    );
+    assert(
+        getConnectedWallTileIndex(filemapSettings.woodenWall, mask) === WALL_TILESET_FIRST_GID + mask,
+        "wooden wall variants must follow their connection mask"
+    );
+    assert(
+        getConnectedWallTileIndex(filemapSettings.stoneWall, 15) === WALL_TILESET_FIRST_GID + 16 + 15,
+        "stone wall variants must use the second half of the connection tileset"
+    );
+    assert(
+        getConnectedWallTileIndex(filemapSettings.woodenWall, 5, 2) === WALL_TILESET_FIRST_GID + (WALL_VARIANTS_PER_DAMAGE_LEVEL * 2) + 5,
+        "critical wall variants must preserve their connection mask"
+    );
+}
+
 testExperienceProgression();
 testActionPointIncome();
 testFailedAttackArmyGrowth();
@@ -106,5 +164,8 @@ testAnnexationRequiresFourSides();
 testSaveValidation();
 testBotTargetPriorities();
 testBotBuildPlacement();
+testBuildingDamageAppearance();
+testDevStartingResources();
+testConnectedWallMasks();
 
 console.log("Rule regression tests passed.");

@@ -1,5 +1,6 @@
 import { PlayerLabel } from "../components/playerLabel";
 import Player from "../player";
+import { uiTheme } from "../uiTheme";
 
 export default class LeftMenu extends Phaser.GameObjects.Container {
     private playerLabels: PlayerLabel[] = [];
@@ -8,21 +9,25 @@ export default class LeftMenu extends Phaser.GameObjects.Container {
         super(scene, x, y);
         scene.add.existing(this);
 
-        const background = scene.add.rectangle(width / 2, height / 2, width, height, 0x102728, 0.94)
-            .setStrokeStyle(1, 0x42605e, 0.95);
+        const shadow = scene.add.rectangle(width / 2 + 4, height / 2 + 5, width, height, 0x2e2419, 0.28);
+        const background = scene.add.rectangle(width / 2, height / 2, width, height, uiTheme.stone, 0.99)
+            .setStrokeStyle(3, uiTheme.border, 1);
+        const innerFrame = scene.add.rectangle(width / 2, height / 2, width - 10, height - 10, 0xffffff, 0)
+            .setStrokeStyle(1, uiTheme.stoneLight, 0.95);
+        const headerRule = scene.add.rectangle(width / 2, 59, width - 28, 1, uiTheme.borderSoft, 0.8);
         const title = scene.add.text(16, 14, "PLAYERS", {
-            fontFamily: "Arial, sans-serif",
+            fontFamily: uiTheme.serif,
             fontSize: "18px",
-            color: "#f2d6a2",
+            color: uiTheme.ink,
             fontStyle: "bold",
-            letterSpacing: 2
+            letterSpacing: 1
         });
         const subtitle = scene.add.text(16, 39, "Teams and player status", {
-            fontFamily: "Arial, sans-serif",
+            fontFamily: uiTheme.sans,
             fontSize: "11px",
-            color: "#75928f"
+            color: uiTheme.inkMuted
         });
-        this.add([background, title, subtitle]);
+        this.add([shadow, background, innerFrame, headerRule, title, subtitle]);
 
         const grouped = [...players].sort((a, b) => a.team - b.team || a.playerId - b.playerId);
         const gap = grouped.length > 10 ? 3 : 6;

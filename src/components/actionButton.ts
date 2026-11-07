@@ -1,12 +1,13 @@
 import { Actions } from "../actions";
+import { uiTheme } from "../uiTheme";
 
 export type ActionButtonVariant = "primary" | "secondary" | "success" | "danger";
 
 const COLORS: Record<ActionButtonVariant, { normal: number; hover: number; border: number }> = {
-    primary: { normal: 0xc9823f, hover: 0xe39a51, border: 0xf3bd77 },
-    secondary: { normal: 0x304b4b, hover: 0x3d6160, border: 0x587b78 },
-    success: { normal: 0x50733b, hover: 0x638c4a, border: 0x8faf70 },
-    danger: { normal: 0x733f3a, hover: 0x925047, border: 0xb76a5e }
+    primary: { normal: 0xb8732c, hover: 0xd18c3b, border: 0xe3b36c },
+    secondary: { normal: 0xc4ae82, hover: 0xd9c69e, border: 0x745a39 },
+    success: { normal: uiTheme.green, hover: uiTheme.greenHover, border: 0xa8bd72 },
+    danger: { normal: uiTheme.danger, hover: uiTheme.dangerHover, border: 0xd08b77 }
 };
 
 export class ActionButton extends Phaser.GameObjects.Container {
@@ -45,9 +46,9 @@ export class ActionButton extends Phaser.GameObjects.Container {
         this.background.on("pointerout", () => this.applyStyle());
 
         this.text = scene.add.text(0, 0, text, {
-            fontFamily: "Arial, sans-serif",
+            fontFamily: uiTheme.serif,
             fontSize: `${Math.max(11, Math.min(14, height * 0.32))}px`,
-            color: "#f7f0df",
+            color: variant === "secondary" ? uiTheme.ink : "#fff8e8",
             fontStyle: "bold",
             align: "center",
             wordWrap: { width: width - 12, useAdvancedWrap: true }
@@ -58,9 +59,9 @@ export class ActionButton extends Phaser.GameObjects.Container {
 
     private applyStyle() {
         const colors = COLORS[this.variant];
-        this.background.setFillStyle(this.isEnabled ? colors.normal : 0x263536, this.isEnabled ? 0.98 : 0.72);
-        this.background.setStrokeStyle(2, this.isEnabled ? colors.border : 0x425253, 0.8);
-        this.text.setColor(this.isEnabled ? "#f7f0df" : "#7f9190");
+        this.background.setFillStyle(this.isEnabled ? colors.normal : uiTheme.disabled, this.isEnabled ? 0.98 : 0.72);
+        this.background.setStrokeStyle(2, this.isEnabled ? colors.border : uiTheme.borderSoft, 0.8);
+        this.text.setColor(this.isEnabled ? (this.variant === "secondary" ? uiTheme.ink : "#fff8e8") : uiTheme.disabledText);
     }
 
     buttonSelected() {

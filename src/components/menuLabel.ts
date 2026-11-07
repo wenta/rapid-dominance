@@ -1,3 +1,5 @@
+import { uiTheme } from "../uiTheme";
+
 export class MenuLabel extends Phaser.GameObjects.Container {
     private valueText: Phaser.GameObjects.Text;
 
@@ -5,18 +7,18 @@ export class MenuLabel extends Phaser.GameObjects.Container {
         super(scene, x, y);
         scene.add.existing(this);
 
-        const background = scene.add.rectangle(0, 0, width, height, 0x1c3233, 0.96)
-            .setStrokeStyle(1, 0x42605e, 0.9);
+        const background = scene.add.rectangle(0, 0, width, height, uiTheme.parchment, 0.98)
+            .setStrokeStyle(1, uiTheme.borderSoft, 0.95);
         const labelText = scene.add.text(-(width / 2) + 10, -(height / 2) + 7, label.toUpperCase(), {
-            fontFamily: "Arial, sans-serif",
+            fontFamily: uiTheme.sans,
             fontSize: "10px",
-            color: "#89aaa5",
+            color: uiTheme.inkMuted,
             fontStyle: "bold"
         });
         this.valueText = scene.add.text(-(width / 2) + 10, (height / 2) - 7, value, {
-            fontFamily: "Arial, sans-serif",
+            fontFamily: uiTheme.serif,
             fontSize: "16px",
-            color: "#f5e9cf",
+            color: uiTheme.ink,
             fontStyle: "bold"
         }).setOrigin(0, 1);
 

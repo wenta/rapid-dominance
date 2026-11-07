@@ -2,8 +2,8 @@ import Dropdown, { DropdownOption } from './components/dropdown';
 import { RoutingButton } from './components/routingButton';
 import GameMode, { deathmatch, t2p2, t2p3, t2p4, t2p5, t2p6, t2p7, t2p8, t3p2, t3p3, t4p2, t4p4, t5p2, t6p2, t7p2, t8p2 } from './gameMode';
 import { clearGameSnapshot, readGameSnapshot } from './gameSave';
-import * as filemapSettings from './settings/filemapSettings';
-import { backgroundWidth, buttonHeight } from './settings/textureSettings';
+import { buttonHeight } from './settings/textureSettings';
+import { uiTheme } from './uiTheme';
 
 interface GameMaps {
   mapName: string;
@@ -13,15 +13,12 @@ interface GameMaps {
 
 export class WelcomeScene extends Phaser.Scene {
   title: Phaser.GameObjects.Text;
-  previewTitle: Phaser.GameObjects.Text;
   sceneWidth: number = 0;
   sceneHeight: number = 0;
   numberOfPlayers: number = 4;
   selectedMap: string = "eagles_nest";
   selectedGameMode: GameMode = deathmatch;
-  map: Phaser.Tilemaps.Tilemap;
-  tileset: Phaser.Tilemaps.Tileset;
-  previewLayer: Phaser.Tilemaps.TilemapLayer;
+  devMode: boolean = false;
 
   gameModesDropdown: Dropdown;
   selectedMapDropdown: Dropdown;
@@ -54,9 +51,7 @@ export class WelcomeScene extends Phaser.Scene {
   preload(): void {
     this.load.setBaseURL(".");
     this.load.image("menu_item", "assets/buttonLong_brown.png");
-    this.load.image("background", "assets/backgroundColorDesert.png");
-    this.load.image("eft_filemap", "assets/eft_filemap-v2.png");
-    this.gameMaps.forEach(x => this.load.tilemapCSV(x.id, 'assets/' + x.id + '.csv'));
+    this.load.image("menu_background", "assets/menu-background-v3.webp");
   }
 
   createFooter() {
@@ -68,7 +63,7 @@ export class WelcomeScene extends Phaser.Scene {
       -footerOffset,
       0,
       "menu_item",
-      "About",
+      "ABOUT",
       footerScale,
       () => this.scene.start("AboutScene", {})
     );
@@ -78,7 +73,7 @@ export class WelcomeScene extends Phaser.Scene {
       footerOffset,
       0,
       "menu_item",
-      "Instruction",
+      "HOW TO PLAY",
       footerScale,
       () => this.scene.start("InstructionScene", {})
     );
@@ -87,48 +82,93 @@ export class WelcomeScene extends Phaser.Scene {
       .setDepth(100);
   }
 
+  createDevToggle() {
+    const footerY = this.sceneHeight - Math.max(38, buttonHeight * 0.8);
+    const container = this.add.container(this.sceneWidth / 2, footerY - 52).setDepth(120);
+    const shadow = this.add.rectangle(3, 4, 244, 36, 0x2e2419, 0.28);
+    const panel = this.add.rectangle(0, 0, 244, 36, uiTheme.stoneLight, 0.96)
+      .setStrokeStyle(2, uiTheme.border, 0.95);
+    const label = this.add.text(-105, 0, "DEV MODE", {
+      fontFamily: uiTheme.sans, fontSize: "10px", color: "#645136", fontStyle: "bold", letterSpacing: 2
+    }).setOrigin(0, 0.5);
+    const track = this.add.rectangle(-4, 0, 38, 20, uiTheme.stoneDark, 1).setStrokeStyle(1, uiTheme.border, 1);
+    const knob = this.add.circle(-13, 0, 7, uiTheme.stoneLight, 1);
+    const state = this.add.text(23, 0, "OFF", {
+      fontFamily: uiTheme.sans, fontSize: "9px", color: "#645136", fontStyle: "bold"
+    }).setOrigin(0, 0.5);
+    const detail = this.add.text(79, 0, "10K GOLD · 100 AP", {
+      fontFamily: uiTheme.sans, fontSize: "9px", color: "#645136", fontStyle: "bold"
+    }).setOrigin(0.5).setAlpha(0.62);
+    const hitArea = this.add.rectangle(0, 0, 244, 40, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
+
+    const update = () => {
+      track.setFillStyle(this.devMode ? uiTheme.gold : uiTheme.stoneDark, 1);
+      track.setStrokeStyle(1, this.devMode ? uiTheme.goldLight : uiTheme.border, 1);
+      knob.setX(this.devMode ? 5 : -13).setFillStyle(this.devMode ? 0xffe3a9 : uiTheme.stoneLight, 1);
+      label.setColor(this.devMode ? "#8d5418" : "#645136");
+      state.setText(this.devMode ? "ON" : "OFF").setColor(this.devMode ? "#8d5418" : "#645136");
+      detail.setAlpha(this.devMode ? 1 : 0.62);
+    };
+    hitArea.on("pointerdown", () => {
+      this.devMode = !this.devMode;
+      update();
+    });
+    container.add([shadow, panel, hitArea, label, track, knob, state, detail]);
+    update();
+  }
+
   create(): void {
     this.sceneWidth = this.cameras.main.width;
     this.sceneHeight = this.cameras.main.height;
     this.compactLayout = this.sceneWidth < 900;
     const savedGame = readGameSnapshot();
 
-    this.add.sprite(0, 0, 'background')
-      .setOrigin(0)
-      .setScale(Math.max(this.sceneWidth / backgroundWidth, this.sceneHeight / 600))
-      .setTint(0x557b78)
-      .setAlpha(0.34);
-    this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, this.sceneWidth, this.sceneHeight, 0x07191a, 0.72).setDepth(1);
+    const background = this.add.image(this.sceneWidth / 2, this.sceneHeight / 2, 'menu_background').setDepth(0);
+    const coverScale = Math.max(this.sceneWidth / background.width, this.sceneHeight / background.height);
+    background.setScale(coverScale);
+    this.tweens.add({
+      targets: background,
+      scaleX: background.scaleX * 1.035,
+      scaleY: background.scaleY * 1.035,
+      duration: 18000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+    this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, this.sceneWidth, this.sceneHeight, 0x5c492e, 0.08).setDepth(1);
+    this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, Math.min(700, this.sceneWidth * 0.82), this.sceneHeight, 0xfff2c9, 0.05).setDepth(1);
 
-    // Centered Title with shadow
-    this.title = this.add.text(this.sceneWidth / 2, Math.max(45, this.sceneHeight * 0.09), "Rapid Dominance", {
-      fontFamily: 'Arial',
-      fontSize: `${Math.max(26, Math.min(44, this.sceneWidth * 0.055))}px`,
-      color: '#ffffff',
+    const menuX = this.sceneWidth / 2;
+    const titleY = Math.max(52, this.sceneHeight * 0.09);
+    this.add.text(menuX, titleY - 30, "TURN-BASED TERRITORY STRATEGY", {
+      fontFamily: uiTheme.sans, fontSize: '11px', color: '#ffe1a1', fontStyle: 'bold', letterSpacing: 3
+    }).setOrigin(0.5).setDepth(10);
+    this.title = this.add.text(menuX, titleY, "RAPID DOMINANCE", {
+      fontFamily: uiTheme.serif,
+      fontSize: `${Math.max(28, Math.min(48, this.sceneWidth * 0.045))}px`,
+      color: '#f5ecd9',
       fontStyle: 'bold',
-      stroke: '#4a3319',
-      strokeThickness: 6,
-      shadow: {
-        offsetX: 2,
-        offsetY: 3,
-        color: '#000000',
-        blur: 4,
-        fill: true
-      }
+      shadow: { offsetX: 0, offsetY: 3, color: '#000000', blur: 8, fill: true }
+    }).setOrigin(0.5).setDepth(10);
+    this.add.text(menuX, titleY + 39, "Build your realm. Break their defenses. Rule the map.", {
+      fontFamily: uiTheme.serif, fontSize: '13px', color: '#f5e4bd'
     }).setOrigin(0.5).setDepth(10);
 
-    const menuX = this.compactLayout ? this.sceneWidth / 2 : this.sceneWidth * 0.35;
-    const startY = Math.max(120, this.sceneHeight * 0.23);
-    const rowGap = Math.min(65, (this.sceneHeight * 0.55) / 4);
+    const startY = Math.max(170, this.sceneHeight * 0.27);
+    const availableMenuHeight = this.sceneHeight - startY - 80;
+    const rowGap = Phaser.Math.Clamp(availableMenuHeight / (savedGame ? 4.7 : 3.9), 44, 65);
     const menuCardHeight = Math.min(this.sceneHeight - 165, rowGap * (savedGame ? 5.35 : 4.5));
-    this.add.rectangle(menuX, startY + menuCardHeight / 2 - 36, this.compactLayout ? Math.min(340, this.sceneWidth - 20) : 340, menuCardHeight, 0x102728, 0.94)
-      .setStrokeStyle(1, 0x42605e, 0.95).setDepth(2);
-    if (!this.compactLayout) {
-      const previewCardTop = startY - 48;
-      const previewCardBottom = this.sceneHeight - 88;
-      this.add.rectangle(this.sceneWidth * 0.76, (previewCardTop + previewCardBottom) / 2, this.sceneWidth * 0.41, previewCardBottom - previewCardTop, 0x102728, 0.94)
-        .setStrokeStyle(1, 0x42605e, 0.95).setDepth(2);
-    }
+    const menuCardWidth = this.compactLayout ? Math.min(350, this.sceneWidth - 24) : 410;
+    this.add.rectangle(menuX + 6, startY + menuCardHeight / 2 - 30, menuCardWidth, menuCardHeight, 0x2e2419, 0.3).setDepth(2);
+    this.add.rectangle(menuX, startY + menuCardHeight / 2 - 36, menuCardWidth, menuCardHeight, uiTheme.stone, 0.98)
+      .setStrokeStyle(4, uiTheme.border, 1).setDepth(3);
+    this.add.rectangle(menuX, startY + menuCardHeight / 2 - 36, menuCardWidth - 12, menuCardHeight - 12, 0xffffff, 0)
+      .setStrokeStyle(1, uiTheme.stoneLight, 0.95).setDepth(4);
+    this.add.rectangle(menuX, startY - 66, 178, 28, uiTheme.stoneLight, 1)
+      .setStrokeStyle(2, uiTheme.border, 1).setDepth(8);
+    this.add.text(menuX, startY - 68, "MATCH SETUP", {
+      fontFamily: uiTheme.serif, fontSize: '12px', color: uiTheme.ink, fontStyle: 'bold', letterSpacing: 1
+    }).setOrigin(0.5).setDepth(10);
 
     // 1. Game Mode Dropdown
     const gameModesDropdownOptions: DropdownOption[] = this.getGameModesDropdownOptions();
@@ -195,7 +235,6 @@ export class WelcomeScene extends Phaser.Scene {
         if (found) {
           this.selectedMapDropdown.setLabelText(`Map: ${found.mapName}`);
         }
-        this.changeMap();
         this.updateStartButtonState();
       }
     );
@@ -206,7 +245,7 @@ export class WelcomeScene extends Phaser.Scene {
       menuX,
       startY + (3.3 * rowGap),
       "menu_item",
-      ">> START GAME <<",
+      "START MATCH",
       1,
       () => {
         if (this.numberOfPlayers !== 0 && this.selectedMap !== "") {
@@ -214,7 +253,8 @@ export class WelcomeScene extends Phaser.Scene {
           this.scene.start("GameScene", {
             selectedMap: this.selectedMap,
             numberOfPlayers: this.numberOfPlayers,
-            selectedGameMode: this.selectedGameMode
+            selectedGameMode: this.selectedGameMode,
+            devMode: this.devMode
           });
         }
       }
@@ -227,7 +267,7 @@ export class WelcomeScene extends Phaser.Scene {
         menuX,
         startY + (4.15 * rowGap),
         "menu_item",
-        `CONTINUE  •  ROUND ${savedGame.roundNumber}`,
+        `CONTINUE MATCH  •  ROUND ${savedGame.roundNumber}`,
         1,
         () => this.scene.start("GameScene", { snapshot: savedGame })
       );
@@ -235,17 +275,9 @@ export class WelcomeScene extends Phaser.Scene {
       this.continueButton.setDepth(100);
     }
 
-    // Map preview title on right
-    this.previewTitle = this.add.text(this.sceneWidth * 0.72, startY - 20, "Map Preview", {
-      fontFamily: 'Arial',
-      fontSize: '20px',
-      color: '#f2d6a2',
-      fontStyle: 'bold'
-    }).setOrigin(0.5).setDepth(10).setVisible(!this.compactLayout);
-
     this.createFooter();
+    this.createDevToggle();
     this.generateMapOptions();
-    this.changeMap();
     this.updateStartButtonState();
   }
 
@@ -253,46 +285,6 @@ export class WelcomeScene extends Phaser.Scene {
     const isReady = this.numberOfPlayers > 0 && this.selectedMap !== "";
     if (this.startButton) {
       this.startButton.setEnabled(isReady);
-    }
-  }
-
-  changeMap() {
-    if (this.previewLayer) {
-      this.previewLayer.destroy();
-    }
-
-    this.map = this.make.tilemap({
-      key: this.selectedMap,
-      tileWidth: filemapSettings.tileWidth,
-      tileHeight: filemapSettings.tileHeight
-    });
-
-    this.tileset = this.map.addTilesetImage('eft_filemap', undefined, filemapSettings.tileWidth, filemapSettings.tileHeight, -2, -2);
-
-    if (this.tileset && !this.compactLayout) {
-      const previewAreaLeft = this.sceneWidth * 0.56;
-      const previewAreaRight = this.sceneWidth * 0.96;
-      const previewY = Math.max(120, this.sceneHeight * 0.26);
-      const previewBottom = this.sceneHeight - Math.max(90, buttonHeight * 1.8);
-      const availableWidth = Math.max(120, previewAreaRight - previewAreaLeft);
-      const availableHeight = Math.max(120, previewBottom - previewY);
-      const previewScale = Math.min(
-        availableWidth / this.map.widthInPixels,
-        availableHeight / this.map.heightInPixels,
-        0.28
-      );
-      const previewX = previewAreaLeft + ((availableWidth - this.map.widthInPixels * previewScale) / 2);
-      this.previewLayer = this.map.createLayer(0, this.tileset, previewX, previewY);
-      if (this.previewLayer) {
-        this.previewLayer.setScale(previewScale);
-        this.previewLayer.setAlpha(0.95);
-        this.previewLayer.setDepth(5);
-      }
-    }
-
-    const currentMap = this.gameMaps.find(m => m.id === this.selectedMap);
-    if (this.previewTitle && currentMap) {
-      this.previewTitle.setText(`Map: ${currentMap.mapName} (Max: ${currentMap.maxPlayers}p)`);
     }
   }
 
@@ -339,7 +331,6 @@ export class WelcomeScene extends Phaser.Scene {
       if (found) {
         this.selectedMapDropdown.setLabelText(`Map: ${found.mapName}`);
       }
-      this.changeMap();
       this.updateStartButtonState();
     });
 
@@ -348,7 +339,6 @@ export class WelcomeScene extends Phaser.Scene {
     if (!isCurrentMapValid && opts.length > 0) {
       this.selectedMap = opts[0].value;
       this.selectedMapDropdown.setLabelText(`Map: ${opts[0].text}`);
-      this.changeMap();
     } else {
       const found = this.gameMaps.find(m => m.id === this.selectedMap);
       if (found) {

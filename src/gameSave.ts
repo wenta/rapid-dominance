@@ -24,6 +24,7 @@ export interface GameSnapshot {
   savedAt: string;
   selectedMap: string;
   numberOfPlayers: number;
+  devMode?: boolean;
   selectedGameMode: SavedGameMode;
   roundNumber: number;
   currentPlayerId: number;

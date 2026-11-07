@@ -35,6 +35,11 @@ Stan na 2026-11-07. Zakres porównania obejmuje jednoosobową i lokalną rozgryw
 - Metadane npm wskazywały stare repozytorium i inną licencję; produkcyjny build działał w trybie developerskim.
 - Brakowało zapisu rozgrywki; teraz stan partii jest automatycznie zapisywany, walidowany i możliwy do wznowienia z menu głównego.
 - Boty wybierały niemal wyłącznie losowe ataki i zbyt wcześnie stawiały kolejne ratusze. Obecnie oceniają wartość celów, rozwijają kopalnie i armię, naprawiają krytyczne budynki oraz fortyfikują zagrożone granice.
+- Ekran startowy korzystał z przypadkowej kreskówkowej grafiki i słabej hierarchii. Został zastąpiony spójną oprawą strategiczną, responsywnym układem konfiguracji oraz czytelniejszym podglądem mapy.
+- Uszkodzenie budynku było widoczne wyłącznie jako liczba HP. Atlas zawiera teraz osobne warianty uszkodzone i krytyczne dla ratusza, koszar, kopalni, wieży obserwacyjnej oraz obu murów.
+- Menu startowe zostało uproszczone do centralnej konfiguracji bez ciężkiego podglądu planszy; lokalny przełącznik DEV pozwala uruchamiać scenariusze testowe z 10 000 złota i 100 PA.
+- Segmenty murów wyglądały jak osobne słupki. Obecnie drewniane i kamienne mury automatycznie tworzą zakończenia, proste odcinki, narożniki, trójniki i skrzyżowania, również po uszkodzeniu.
+- Ciężkie nakładki i ciemna korekcja kolorów przytłaczały oprawę. Menu, plansza, atlas budynków i panele otrzymały jaśniejszą, cieplejszą paletę dziennego światła.
 
 ## Testy i ryzyka
 

@@ -1,4 +1,5 @@
 import Player from "../player";
+import { uiTheme } from "../uiTheme";
 
 export class PlayerLabel extends Phaser.GameObjects.Container {
     private background: Phaser.GameObjects.Rectangle;
@@ -12,19 +13,19 @@ export class PlayerLabel extends Phaser.GameObjects.Container {
         scene.add.existing(this);
         this.playerId = player.playerId;
 
-        this.background = scene.add.rectangle(0, 0, width, height, 0x1b3031, 0.94)
-            .setStrokeStyle(1, 0x365253, 0.9);
+        this.background = scene.add.rectangle(0, 0, width, height, uiTheme.parchment, 0.98)
+            .setStrokeStyle(1, uiTheme.borderSoft, 0.95);
         this.accent = scene.add.rectangle(-(width / 2) + 3, 0, 5, height - 6, player.color, 1);
         this.nameText = scene.add.text(-(width / 2) + 16, -7, player.name, {
-            fontFamily: "Arial, sans-serif",
+            fontFamily: uiTheme.serif,
             fontSize: `${Math.max(11, Math.min(15, height * 0.36))}px`,
-            color: "#f2ead8",
+            color: uiTheme.ink,
             fontStyle: "bold"
         }).setOrigin(0, 0.5);
         this.teamText = scene.add.text(-(width / 2) + 16, 9, `TEAM ${player.team}`, {
-            fontFamily: "Arial, sans-serif",
+            fontFamily: uiTheme.sans,
             fontSize: `${Math.max(9, Math.min(11, height * 0.25))}px`,
-            color: "#88a29f"
+            color: uiTheme.inkMuted
         }).setOrigin(0, 0.5);
         this.add([this.background, this.accent, this.nameText, this.teamText]);
     }
@@ -34,11 +35,11 @@ export class PlayerLabel extends Phaser.GameObjects.Container {
         const current = player.playerId === currentPlayer;
         this.nameText.setText(player.name);
         this.teamText.setText(`TEAM ${player.team}${player.isHuman ? "  •  YOU" : ""}`);
-        this.background.setFillStyle(current ? 0x31534d : 0x1b3031, active ? 0.97 : 0.55);
-        this.background.setStrokeStyle(current ? 2 : 1, current ? 0xe6b76a : 0x365253, 0.95);
+        this.background.setFillStyle(current ? uiTheme.parchmentHover : uiTheme.parchment, active ? 0.99 : 0.6);
+        this.background.setStrokeStyle(current ? 2 : 1, current ? uiTheme.gold : uiTheme.borderSoft, 0.95);
         this.accent.setAlpha(active ? 1 : 0.25);
-        this.nameText.setColor(active ? "#f2ead8" : "#6f7d7c");
-        this.teamText.setColor(current ? "#e6b76a" : "#88a29f");
+        this.nameText.setColor(active ? uiTheme.ink : "#8a8171");
+        this.teamText.setColor(current ? "#995f1e" : uiTheme.inkMuted);
     }
 
     getPlayerId() {

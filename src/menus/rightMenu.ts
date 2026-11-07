@@ -2,6 +2,7 @@ import { Actions } from "../actions";
 import { ActionButton } from "../components/actionButton";
 import { MenuLabel } from "../components/menuLabel";
 import * as gameSettings from "../settings/gameSettings";
+import { uiTheme } from "../uiTheme";
 
 export default class RightMenu extends Phaser.GameObjects.Container {
     private actionPointsLabel: MenuLabel;
@@ -36,32 +37,36 @@ export default class RightMenu extends Phaser.GameObjects.Container {
         const padding = 14;
         const gap = 8;
         const innerWidth = width - padding * 2;
-        const background = scene.add.rectangle(width / 2, height / 2, width, height, 0x102728, 0.96)
-            .setStrokeStyle(1, 0x42605e, 0.95);
+        const shadow = scene.add.rectangle(width / 2 + 4, height / 2 + 5, width, height, 0x2e2419, 0.28);
+        const background = scene.add.rectangle(width / 2, height / 2, width, height, uiTheme.stone, 0.99)
+            .setStrokeStyle(3, uiTheme.border, 1);
+        const innerFrame = scene.add.rectangle(width / 2, height / 2, width - 10, height - 10, 0xffffff, 0)
+            .setStrokeStyle(1, uiTheme.stoneLight, 0.95);
+        const headerRule = scene.add.rectangle(width / 2, 62, width - 28, 1, uiTheme.borderSoft, 0.8);
         const title = scene.add.text(padding, 13, "COMMAND", {
-            fontFamily: "Arial, sans-serif",
+            fontFamily: uiTheme.serif,
             fontSize: "18px",
-            color: "#f2d6a2",
+            color: uiTheme.ink,
             fontStyle: "bold",
-            letterSpacing: 2
+            letterSpacing: 1
         });
         this.turnText = scene.add.text(padding, 38, "Preparing turn…", {
-            fontFamily: "Arial, sans-serif",
+            fontFamily: uiTheme.sans,
             fontSize: "11px",
-            color: "#88a29f"
+            color: uiTheme.inkMuted
         });
         const menuButton = scene.add.text(width - padding, 20, "MENU  ·  ESC", {
-            fontFamily: "Arial, sans-serif",
+            fontFamily: uiTheme.sans,
             fontSize: "10px",
-            color: "#d9a561",
+            color: "#774814",
             fontStyle: "bold",
-            backgroundColor: "#1b3333",
+            backgroundColor: "#ead9b4",
             padding: { x: 7, y: 5 }
         }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
-        menuButton.on("pointerover", () => menuButton.setColor("#fff0d2"));
-        menuButton.on("pointerout", () => menuButton.setColor("#d9a561"));
+        menuButton.on("pointerover", () => menuButton.setColor("#aa641b"));
+        menuButton.on("pointerout", () => menuButton.setColor("#774814"));
         menuButton.on("pointerdown", onMenu);
-        this.add([background, title, this.turnText, menuButton]);
+        this.add([shadow, background, innerFrame, headerRule, title, this.turnText, menuButton]);
 
         const threeColumnWidth = (innerWidth - gap * 2) / 3;
         this.actionPointsLabel = new MenuLabel(scene, padding + threeColumnWidth / 2, 82, threeColumnWidth, 48, "Action points", "8 / 12");
@@ -82,9 +87,9 @@ export default class RightMenu extends Phaser.GameObjects.Container {
         ]);
 
         const sectionStyle = {
-            fontFamily: "Arial, sans-serif",
+            fontFamily: uiTheme.sans,
             fontSize: "10px",
-            color: "#75928f",
+            color: uiTheme.inkMuted,
             fontStyle: "bold"
         };
         const buttonHeight = Math.max(26, Math.min(40, (height - 373) / 7));
@@ -131,7 +136,7 @@ export default class RightMenu extends Phaser.GameObjects.Container {
 
     updateCurrentPlayer(name: string, team: number, isHuman: boolean, round: number) {
         this.turnText.setText(`ROUND ${round}  •  ${isHuman ? "YOUR TURN" : "AI TURN"}  •  ${name}  •  TEAM ${team}`);
-        this.turnText.setColor(isHuman ? "#e6b76a" : "#88a29f");
+        this.turnText.setColor(isHuman ? "#995f1e" : uiTheme.inkMuted);
     }
 
     updateTroopsAmount(amount: number) { this.troopsAmountLabel.updateText(String(amount)); }

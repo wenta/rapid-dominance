@@ -1,4 +1,5 @@
 import { RoutingButton } from "./components/routingButton";
+import { uiTheme } from "./uiTheme";
 
 export class InstructionScene extends Phaser.Scene {
     sceneWidth: number = 0
@@ -10,25 +11,27 @@ export class InstructionScene extends Phaser.Scene {
 
     preload() {
         this.load.text('instructionText', 'assets/data/en/instruction.txt');
-        this.load.image("background", "assets/backgroundColorDesert.png");
+        this.load.image("background", "assets/menu-background-v3.webp");
     }
 
     create() {
         this.sceneWidth = this.cameras.main.width;
         this.sceneHeight = this.cameras.main.height;
 
-        this.add.sprite(0, 0, 'background').setOrigin(0).setDisplaySize(this.sceneWidth, this.sceneHeight).setTint(0x557b78).setAlpha(0.3);
-        this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, this.sceneWidth, this.sceneHeight, 0x07191a, 0.75);
+        const background = this.add.image(this.sceneWidth / 2, this.sceneHeight / 2, 'background');
+        background.setScale(Math.max(this.sceneWidth / background.width, this.sceneHeight / background.height));
+        this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, this.sceneWidth, this.sceneHeight, 0x5c492e, 0.16);
 
         const contentWidth = Math.min(900, this.sceneWidth - 64);
         const scrollArea = new Phaser.Geom.Rectangle((this.sceneWidth - contentWidth) / 2, 24, contentWidth, this.sceneHeight - 48);
-        this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, contentWidth + 24, this.sceneHeight - 28, 0x102728, 0.96)
-            .setStrokeStyle(1, 0x42605e, 0.95);
+        this.add.rectangle(this.sceneWidth / 2 + 5, this.sceneHeight / 2 + 6, contentWidth + 24, this.sceneHeight - 28, 0x2e2419, 0.3);
+        this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, contentWidth + 24, this.sceneHeight - 28, uiTheme.stoneLight, 0.97)
+            .setStrokeStyle(3, uiTheme.border, 0.98);
 
         const textStyle = {
-            fontFamily: 'Arial',
+            fontFamily: uiTheme.serif,
             fontSize: '18px',
-            color: '#e9e4d8',
+            color: uiTheme.ink,
             lineSpacing: 7,
             wordWrap: { width: scrollArea.width - 32 },
 

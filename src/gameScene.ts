@@ -2,9 +2,11 @@ import 'phaser';
 
 import { Actions } from './actions';
 import { chooseFrontierBuildField, chooseSafestBuildField, rankAttackTargets } from './botStrategy';
+import { getBuildingTileIndex } from './buildingAppearance';
 import { FadingNumber } from './components/fadingNumber';
 import { Popup } from './components/popup';
 import { RoutingButton } from './components/routingButton';
+import { applyDevStartingResources } from './devMode';
 import Field from './field';
 import Fields from './fields';
 import GameMode, { deathmatch } from './gameMode';
@@ -15,6 +17,8 @@ import Player from './player';
 import SelectedField from './selectedField';
 import * as filemapSettings from './settings/filemapSettings';
 import * as gameSettings from './settings/gameSettings';
+import { calculateWallConnectionMask, getConnectedWallTileIndex, isWallType, WALL_TILESET_FIRST_GID } from './wallConnections';
+import { uiTheme } from './uiTheme';
 
 
 
@@ -23,6 +27,7 @@ export class GameScene extends Phaser.Scene {
   info: Phaser.GameObjects.Text;
   map: Phaser.Tilemaps.Tilemap;
   tileset: Phaser.Tilemaps.Tileset;
+  wallTileset: Phaser.Tilemaps.Tileset;
   leftPanel: LeftMenu;
   rightPanel: RightMenu;
   newScale: number = 1
@@ -56,6 +61,7 @@ export class GameScene extends Phaser.Scene {
   gameEnded: boolean = false
   modalOverlay: Phaser.GameObjects.Container | undefined
   pendingSnapshot: GameSnapshot | undefined
+  devMode: boolean = false
 
   constructor() {
     super({
@@ -71,6 +77,7 @@ export class GameScene extends Phaser.Scene {
     this.roundNumber = 1;
     this.timeSinceLastIncrement = 0;
     this.pendingSnapshot = isGameSnapshot(data?.snapshot) ? data.snapshot : undefined;
+    this.devMode = this.pendingSnapshot ? this.pendingSnapshot.devMode === true : data?.devMode === true;
     if (this.pendingSnapshot) {
       this.selectedMap = this.pendingSnapshot.selectedMap;
       this.numberOfPlayers = this.pendingSnapshot.numberOfPlayers;
@@ -85,7 +92,8 @@ export class GameScene extends Phaser.Scene {
 
   preload(): void {
     this.load.setBaseURL(".");
-    this.load.image("eft_filemap", "assets/eft_filemap-v2.png");
+    this.load.image("eft_filemap", "assets/eft_filemap-v4.png");
+    this.load.image("wall_connections", "assets/wall-connections-v3.webp");
     this.load.image("menu_item", "assets/buttonLong_brown.png");
     this.load.image("background2", "assets/backgroundColorFall.png");
     this.load.image("tilemap_border", "assets/buttonSquare_brown_pressed.png");
@@ -232,9 +240,7 @@ export class GameScene extends Phaser.Scene {
 
 
 
-  /**
-   * We set first player as a human player.
-   */
+  /** Creates the match roster and applies optional local developer resources to the human player. */
   initializePlayers() {
     let names = ['Hammurabi', 'Cyrus', 'Saladin', 'Subutai', 'Joshua', 'Scipio', 'Clausewitz', 'Caesar', 'Sun Tzu',
       'Alexander', 'Napoleon', 'Hannibal', 'Ashoka', 'Charlemagne', 'Temujin', 'Attila', 'Shingen', 'Nobunaga',
@@ -255,6 +261,7 @@ export class GameScene extends Phaser.Scene {
     for (let i = 0; i < this.numberOfPlayers; i++) {
       const team = this.selectedGameMode === deathmatch ? playersInTeams[i] : playersInTeams.pop();
       const player = i === humanPlayerIndex ? new Player(i, team, names[i], true) : new Player(i, team, names[i])
+      if (player.isHuman && this.devMode) applyDevStartingResources(player);
       this.players.push(player)
     }
     let p = this.players.find(x => x.isHuman)
@@ -297,8 +304,9 @@ export class GameScene extends Phaser.Scene {
       field.isGoldDeposit = saved.isGoldDeposit;
       field.initialFogOfWar = saved.initialFogOfWar;
       field.temporaryFogOfWar = saved.temporaryFogOfWar;
-      this.map.putTileAt(saved.typeField, saved.x, saved.y, true, 0);
+      this.map.putTileAt(getBuildingTileIndex(saved.typeField, saved.resistance), saved.x, saved.y, true, 0);
     });
+    this.refreshAllWallVisuals();
 
     this.players = restoredPlayers;
     this.currentPlayer = restoredCurrentPlayer;
@@ -328,6 +336,7 @@ export class GameScene extends Phaser.Scene {
       savedAt: new Date().toISOString(),
       selectedMap: this.selectedMap,
       numberOfPlayers: this.numberOfPlayers,
+      devMode: this.devMode,
       selectedGameMode: {
         numberOfTeams: this.selectedGameMode.numberOfTeams,
         playersPerTeams: this.selectedGameMode.playersPerTeams,
@@ -361,6 +370,45 @@ export class GameScene extends Phaser.Scene {
     return saved;
   }
 
+  private getFieldAt(x: number, y: number): Field | undefined {
+    if (x < 0 || x >= gameSettings.mapSizeX || y < 0 || y >= gameSettings.mapSizeY) return undefined;
+    return this.fields.get(y, x);
+  }
+
+  private refreshWallVisual(field: Field): void {
+    if (!isWallType(field.typeField)) return;
+    const tile = this.map.getTileAt(field.x, field.y);
+    if (!tile) return;
+
+    const maximumResistance = this.getMaximumResistance(field.typeField);
+    const damageLevel: 0 | 1 | 2 = field.resistance >= maximumResistance
+      ? 0
+      : field.resistance / maximumResistance <= 0.5 ? 2 : 1;
+    tile.index = getConnectedWallTileIndex(
+      field.typeField,
+      calculateWallConnectionMask(field, (x, y) => this.getFieldAt(x, y)),
+      damageLevel
+    );
+  }
+
+  private refreshWallsAround(field: Pick<Field, "x" | "y">): void {
+    const positions = [
+      [field.x, field.y],
+      [field.x, field.y - 1],
+      [field.x + 1, field.y],
+      [field.x, field.y + 1],
+      [field.x - 1, field.y]
+    ];
+    positions.forEach(([x, y]) => {
+      const candidate = this.getFieldAt(x, y);
+      if (candidate) this.refreshWallVisual(candidate);
+    });
+  }
+
+  private refreshAllWallVisuals(): void {
+    this.fields.forEach(field => this.refreshWallVisual(field));
+  }
+
   createRigthPanel() {
     const bindedAction = this.performAction.bind(this);
     const panelScale = Math.min(1, this.panelHeight / 660);
@@ -370,10 +418,10 @@ export class GameScene extends Phaser.Scene {
     if (this.sceneWidth < 960) {
       this.rightPanel.setVisible(false);
       this.rightPanelToggle = this.add.text(this.sceneWidth - 12, 12, "Actions ☰", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: uiTheme.serif,
         fontSize: "15px",
-        color: "#f7e7c8",
-        backgroundColor: "#203c3b",
+        color: uiTheme.ink,
+        backgroundColor: "#e6d5ad",
         padding: { x: 10, y: 7 }
       }).setOrigin(1, 0).setDepth(300).setInteractive({ useHandCursor: true });
       this.rightPanelToggle.on("pointerdown", () => {
@@ -407,14 +455,17 @@ export class GameScene extends Phaser.Scene {
     this.mapLayerRight = this.centralPanelX + boardSize;
     this.newScale = boardSize / (filemapSettings.tileWidth * gameSettings.mapSizeX);
 
-    this.add.sprite(0, 0, 'background2').setOrigin(0).setDisplaySize(this.sceneWidth, this.sceneHeight).setTint(0x476a67).setAlpha(0.22);
-    this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, this.sceneWidth, this.sceneHeight, 0x07191a, 0.78);
-    this.add.rectangle(this.centralPanelX + boardSize / 2 + 5, this.tilemapY + boardSize / 2 + 7, boardSize + 14, boardSize + 14, 0x000000, 0.35).setDepth(1);
-    this.add.rectangle(this.centralPanelX + boardSize / 2, this.tilemapY + boardSize / 2, boardSize + 8, boardSize + 8, 0x102921, 1)
-      .setStrokeStyle(3, 0xc18b4e, 0.95).setDepth(2);
+    this.add.sprite(0, 0, 'background2').setOrigin(0).setDisplaySize(this.sceneWidth, this.sceneHeight).setAlpha(0.72);
+    this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, this.sceneWidth, this.sceneHeight, 0xfff2cf, 0.12)
+      .setBlendMode(Phaser.BlendModes.SCREEN);
+    this.add.rectangle(this.centralPanelX + boardSize / 2 + 6, this.tilemapY + boardSize / 2 + 8, boardSize + 22, boardSize + 22, 0x2e2419, 0.3).setDepth(1);
+    this.add.rectangle(this.centralPanelX + boardSize / 2, this.tilemapY + boardSize / 2, boardSize + 18, boardSize + 18, uiTheme.stone, 1)
+      .setStrokeStyle(3, uiTheme.border, 1).setDepth(2);
+    this.add.rectangle(this.centralPanelX + boardSize / 2, this.tilemapY + boardSize / 2, boardSize + 10, boardSize + 10, 0xffffff, 0)
+      .setStrokeStyle(2, uiTheme.stoneLight, 1).setDepth(2);
     const boardGrid = this.add.graphics().setDepth(2);
     const gridStep = boardSize / gameSettings.mapSizeX;
-    boardGrid.lineStyle(1, 0x53736b, 0.18);
+    boardGrid.lineStyle(1, 0x6f7e50, 0.14);
     for (let index = 1; index < gameSettings.mapSizeX; index++) {
       const offset = index * gridStep;
       boardGrid.lineBetween(this.centralPanelX + offset, this.tilemapY, this.centralPanelX + offset, this.tilemapY + boardSize);
@@ -422,11 +473,13 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.map = this.make.tilemap({ key: 'map', tileWidth: filemapSettings.tileWidth, tileHeight: filemapSettings.tileHeight });
-    let tileset = this.map.addTilesetImage('eft_filemap', undefined, filemapSettings.tileWidth, filemapSettings.tileHeight, -2, -2);
+    let tileset = this.map.addTilesetImage('eft_filemap', undefined, filemapSettings.tileWidth, filemapSettings.tileHeight, 0, 0);
+    let wallTileset = this.map.addTilesetImage('wall_connections', undefined, filemapSettings.tileWidth, filemapSettings.tileHeight, 0, 0, WALL_TILESET_FIRST_GID);
 
-    if (tileset) {
+    if (tileset && wallTileset) {
       this.tileset = tileset;
-      let layer = this.map.createLayer(0, this.tileset, this.centralPanelX, this.tilemapY);
+      this.wallTileset = wallTileset;
+      let layer = this.map.createLayer(0, [this.tileset, this.wallTileset], this.centralPanelX, this.tilemapY);
 
       if (layer) {
         layer.setScale(this.newScale);
@@ -434,8 +487,11 @@ export class GameScene extends Phaser.Scene {
         layer.setDepth(3);
       }
     }
+    this.add.rectangle(this.centralPanelX + boardSize / 2, this.tilemapY + boardSize / 2, boardSize, boardSize, 0xffe6aa, 0.07)
+      .setBlendMode(Phaser.BlendModes.SCREEN).setDepth(4);
 
     this.initializeFields();
+    this.refreshAllWallVisuals();
     this.initializePlayers();
     if (this.pendingSnapshot && !this.restoreSnapshot(this.pendingSnapshot)) {
       clearGameSnapshot();
@@ -445,7 +501,7 @@ export class GameScene extends Phaser.Scene {
     if (compact) {
       this.leftPanel.setVisible(false).setDepth(250);
       this.leftPanelToggle = this.add.text(12, 12, "☰ Players", {
-        fontFamily: "Arial, sans-serif", fontSize: "15px", color: "#f7e7c8", backgroundColor: "#203c3b", padding: { x: 10, y: 7 }
+        fontFamily: uiTheme.serif, fontSize: "15px", color: uiTheme.ink, backgroundColor: "#e6d5ad", padding: { x: 10, y: 7 }
       }).setDepth(300).setInteractive({ useHandCursor: true });
       this.leftPanelToggle.on("pointerdown", () => {
         const visible = !this.leftPanel.visible;
@@ -749,6 +805,11 @@ export class GameScene extends Phaser.Scene {
       if (field.typeField !== filemapSettings.blank && field.typeField !== filemapSettings.goldDeposit) {
         if (field.resistance > 1) {
           field.resistance = field.resistance - 1;
+          if (isWallType(field.typeField)) this.refreshWallsAround(field);
+          else {
+            const tile = this.map.getTileAt(field.x, field.y);
+            if (tile) tile.index = getBuildingTileIndex(field.typeField, field.resistance);
+          }
           defendingPlayer?.registerFailedEnemyAttack();
         }
         else {
@@ -765,6 +826,7 @@ export class GameScene extends Phaser.Scene {
             if (tile) tile.index = filemapSettings.blank;
           }
           field.resistance = 1;
+          if (isWallType(attackedType)) this.refreshWallsAround(field);
           this.refreshFogOfWar();
         }
       }
@@ -894,16 +956,16 @@ export class GameScene extends Phaser.Scene {
     this.uiPaused = true;
     this.refreshActionAvailability();
     const overlay = this.add.container(0, 0).setDepth(2000);
-    const blocker = this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, this.sceneWidth, this.sceneHeight, 0x020909, 0.78)
+    const blocker = this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, this.sceneWidth, this.sceneHeight, 0x241b11, 0.65)
       .setInteractive();
     const cardWidth = Math.min(420, this.sceneWidth - 40);
-    const card = this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, cardWidth, 400, 0x102728, 1)
-      .setStrokeStyle(2, 0xc18b4e, 0.95);
+    const card = this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, cardWidth, 400, uiTheme.stoneLight, 1)
+      .setStrokeStyle(4, uiTheme.border, 1);
     const title = this.add.text(this.sceneWidth / 2, this.sceneHeight / 2 - 158, "GAME PAUSED", {
-      fontFamily: "Arial, sans-serif", fontSize: "27px", color: "#f2d6a2", fontStyle: "bold"
+      fontFamily: uiTheme.serif, fontSize: "27px", color: uiTheme.ink, fontStyle: "bold"
     }).setOrigin(0.5);
     const subtitle = this.add.text(this.sceneWidth / 2, this.sceneHeight / 2 - 124, `Round ${this.roundNumber}  •  ${this.selectedMap.replace(/_/g, " ")}`, {
-      fontFamily: "Arial, sans-serif", fontSize: "13px", color: "#88a29f"
+      fontFamily: uiTheme.sans, fontSize: "13px", color: uiTheme.inkMuted
     }).setOrigin(0.5);
     const resume = new RoutingButton(this, this.sceneWidth / 2, this.sceneHeight / 2 - 72, "", "RESUME", 1, () => this.closePauseMenu());
     const save = new RoutingButton(this, this.sceneWidth / 2, this.sceneHeight / 2 - 12, "", "SAVE & RESUME", 1, () => {
@@ -914,7 +976,7 @@ export class GameScene extends Phaser.Scene {
     save.setButtonColor(0x3f755c);
     const restart = new RoutingButton(this, this.sceneWidth / 2, this.sceneHeight / 2 + 48, "", "RESTART MATCH", 1, () => {
       clearGameSnapshot();
-      this.scene.restart({ selectedMap: this.selectedMap, numberOfPlayers: this.numberOfPlayers, selectedGameMode: this.selectedGameMode });
+      this.scene.restart({ selectedMap: this.selectedMap, numberOfPlayers: this.numberOfPlayers, selectedGameMode: this.selectedGameMode, devMode: this.devMode });
     });
     const mainMenu = new RoutingButton(this, this.sceneWidth / 2, this.sceneHeight / 2 + 108, "", "MAIN MENU", 1, () => {
       this.saveCurrentGame(false);
@@ -940,20 +1002,20 @@ export class GameScene extends Phaser.Scene {
     this.uiPaused = true;
     this.modalOverlay?.destroy(true);
     const overlay = this.add.container(0, 0).setDepth(2500);
-    const blocker = this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, this.sceneWidth, this.sceneHeight, won ? 0x10261b : 0x260f0f, 0.86)
+    const blocker = this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, this.sceneWidth, this.sceneHeight, won ? 0x27321b : 0x321913, 0.76)
       .setInteractive();
     const cardWidth = Math.min(500, this.sceneWidth - 40);
-    const card = this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, cardWidth, 310, 0x102728, 1)
-      .setStrokeStyle(3, won ? 0xe1b45f : 0xb85d54, 1);
+    const card = this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, cardWidth, 310, uiTheme.stoneLight, 1)
+      .setStrokeStyle(4, won ? uiTheme.gold : uiTheme.danger, 1);
     const title = this.add.text(this.sceneWidth / 2, this.sceneHeight / 2 - 105, titleText.toUpperCase(), {
-      fontFamily: "Arial, sans-serif", fontSize: "34px", color: won ? "#f4d78f" : "#e58b80", fontStyle: "bold"
+      fontFamily: uiTheme.serif, fontSize: "34px", color: won ? "#7b541d" : "#873b32", fontStyle: "bold"
     }).setOrigin(0.5);
     const message = this.add.text(this.sceneWidth / 2, this.sceneHeight / 2 - 55, detail, {
-      fontFamily: "Arial, sans-serif", fontSize: "15px", color: "#c6d1cd", align: "center", wordWrap: { width: cardWidth - 50 }
+      fontFamily: uiTheme.serif, fontSize: "15px", color: uiTheme.ink, align: "center", wordWrap: { width: cardWidth - 50 }
     }).setOrigin(0.5);
     const replay = new RoutingButton(this, this.sceneWidth / 2, this.sceneHeight / 2 + 28, "", "PLAY AGAIN", 1, () => {
       clearGameSnapshot();
-      this.scene.restart({ selectedMap: this.selectedMap, numberOfPlayers: this.numberOfPlayers, selectedGameMode: this.selectedGameMode });
+      this.scene.restart({ selectedMap: this.selectedMap, numberOfPlayers: this.numberOfPlayers, selectedGameMode: this.selectedGameMode, devMode: this.devMode });
     });
     const menu = new RoutingButton(this, this.sceneWidth / 2, this.sceneHeight / 2 + 92, "", "MAIN MENU", 1, () => this.scene.start("WelcomeScene", {}));
     overlay.add([blocker, card, title, message, replay, menu]);
@@ -998,6 +1060,7 @@ export class GameScene extends Phaser.Scene {
           field.typeField = filemapSettings.woodenWall;
           field.resistance = gameSettings.woodenWallResistance;
           this.map.putTileAt(filemapSettings.woodenWall, field.x, field.y, true, 0);
+          this.refreshWallsAround(field);
           this.currentPlayer.descreaseGold(gameSettings.woodenWallGoldCost);
           this.currentPlayer.descreaseActionPoints(gameSettings.woodenWallActionPointCost);
           this.currentPlayer.increaseExperience(gameSettings.constructionOfTheBuilding);
@@ -1018,6 +1081,7 @@ export class GameScene extends Phaser.Scene {
           field.typeField = filemapSettings.stoneWall;
           field.resistance = gameSettings.stoneWallResistance;
           this.map.putTileAt(filemapSettings.stoneWall, field.x, field.y, true, 0);
+          this.refreshWallsAround(field);
           this.currentPlayer.descreaseGold(gameSettings.stoneWallGoldCost);
           this.currentPlayer.descreaseActionPoints(gameSettings.stoneWallActionPointCost);
           this.currentPlayer.increaseExperience(gameSettings.constructionOfTheBuilding);
@@ -1076,6 +1140,11 @@ export class GameScene extends Phaser.Scene {
       return false;
     }
     field.resistance = maximumResistance;
+    if (isWallType(field.typeField)) this.refreshWallsAround(field);
+    else {
+      const tile = this.map.getTileAt(field.x, field.y);
+      if (tile) tile.index = getBuildingTileIndex(field.typeField, field.resistance);
+    }
     this.currentPlayer.descreaseGold(goldCost);
     this.currentPlayer.descreaseActionPoints(gameSettings.repairActionPointCost);
     this.refreshFogOfWar();
@@ -1098,9 +1167,11 @@ export class GameScene extends Phaser.Scene {
       this.createPopup("Not enough action points to demolish this building.");
       return false;
     }
+    const demolishedType = field.typeField;
     field.typeField = field.isGoldDeposit ? filemapSettings.goldDeposit : filemapSettings.blank;
     field.resistance = gameSettings.blankFieldResistance;
     this.map.putTileAt(field.typeField, field.x, field.y, true, 0);
+    if (isWallType(demolishedType)) this.refreshWallsAround(field);
     this.currentPlayer.descreaseActionPoints(gameSettings.demolishActionPointCost);
     this.refreshFogOfWar();
     return true;

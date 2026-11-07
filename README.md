@@ -39,9 +39,11 @@ The current match is saved automatically in the browser at the end of every turn
 
 Computer-controlled opponents prioritize strategic targets, protect damaged townhalls, develop mines and barracks, and fortify exposed borders.
 
+For local testing, the small **DEV** switch at the bottom of the main menu starts the human player with 10,000 gold and 100 action points.
+
 # About graphics
 
-The interface uses assets from [Kenney](https://www.kenney.nl/) and OpenGameArt. The current map tileset is original artwork generated specifically for Rapid Dominance and inspired by the visual language of classic top-down strategy games.
+The interface uses assets from [Kenney](https://www.kenney.nl/) and OpenGameArt. The current bright menu background and map tileset are original artwork generated specifically for Rapid Dominance and inspired by the visual language of classic strategy games. Buildings have separate healthy, damaged, and critical visual states. Wooden and stone walls automatically connect into endpoints, lines, corners, junctions, and crossings.
 
 # Join in!
 

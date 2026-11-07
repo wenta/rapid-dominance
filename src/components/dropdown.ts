@@ -1,3 +1,5 @@
+import { uiTheme } from "../uiTheme";
+
 export interface DropdownOption {
     text: string;
     value: any;
@@ -32,23 +34,23 @@ export default class Dropdown extends Phaser.GameObjects.Container {
         this.controlWidth = Math.min(280, scene.cameras.main.width - 28);
         this.setDepth(50);
 
-        this.background = scene.add.rectangle(0, 0, this.controlWidth, this.controlHeight, 0x1b3333, 0.98)
-            .setStrokeStyle(2, 0x4d6e6a, 0.9)
+        this.background = scene.add.rectangle(0, 0, this.controlWidth, this.controlHeight, uiTheme.parchment, 0.99)
+            .setStrokeStyle(2, uiTheme.border, 0.95)
             .setInteractive({ useHandCursor: true });
         this.background.on("pointerdown", () => this.toggleOptions());
-        this.background.on("pointerover", () => this.background.setFillStyle(0x294746, 1));
-        this.background.on("pointerout", () => this.background.setFillStyle(0x1b3333, 0.98));
+        this.background.on("pointerover", () => this.background.setFillStyle(uiTheme.parchmentHover, 1));
+        this.background.on("pointerout", () => this.background.setFillStyle(uiTheme.parchment, 0.99));
 
         this.label = scene.add.text(-(this.controlWidth / 2) + 16, 0, labelText, {
-            color: "#f5ead6",
+            color: uiTheme.ink,
             fontSize: "16px",
-            fontFamily: "Arial, sans-serif",
+            fontFamily: uiTheme.serif,
             fontStyle: "bold"
         }).setOrigin(0, 0.5);
         this.chevron = scene.add.text((this.controlWidth / 2) - 18, 0, "▾", {
-            color: "#d9a561",
+            color: "#8a541c",
             fontSize: "18px",
-            fontFamily: "Arial, sans-serif"
+            fontFamily: uiTheme.serif
         }).setOrigin(0.5);
         this.add([this.background, this.label, this.chevron]);
 
@@ -78,16 +80,16 @@ export default class Dropdown extends Phaser.GameObjects.Container {
         const visibleOptions = this.options.slice(this.optionOffset, this.optionOffset + this.maxVisibleOptions);
         visibleOptions.forEach((option, index) => {
             const optionY = index * (this.controlHeight + 2);
-            const optionBackground = scene.add.rectangle(0, optionY, this.controlWidth, this.controlHeight, 0x203b3a, 0.99)
-                .setStrokeStyle(1, 0x4d6e6a, 0.9)
+            const optionBackground = scene.add.rectangle(0, optionY, this.controlWidth, this.controlHeight, uiTheme.stoneLight, 0.99)
+                .setStrokeStyle(1, uiTheme.borderSoft, 0.95)
                 .setInteractive({ useHandCursor: true });
             const optionText = scene.add.text(-(this.controlWidth / 2) + 16, optionY, option.text, {
-                color: "#f5ead6",
+                color: uiTheme.ink,
                 fontSize: "15px",
-                fontFamily: "Arial, sans-serif"
+                fontFamily: uiTheme.serif
             }).setOrigin(0, 0.5);
-            optionBackground.on("pointerover", () => optionBackground.setFillStyle(0x365a56, 1));
-            optionBackground.on("pointerout", () => optionBackground.setFillStyle(0x203b3a, 0.99));
+            optionBackground.on("pointerover", () => optionBackground.setFillStyle(uiTheme.parchmentHover, 1));
+            optionBackground.on("pointerout", () => optionBackground.setFillStyle(uiTheme.stoneLight, 0.99));
             optionBackground.on("pointerdown", () => {
                 this.setLabelText(option.text);
                 this.onSelect(option.value);
@@ -97,11 +99,11 @@ export default class Dropdown extends Phaser.GameObjects.Container {
         });
         if (this.options.length > this.maxVisibleOptions) {
             const infoY = visibleOptions.length * (this.controlHeight + 2) - 13;
-            const infoBackground = scene.add.rectangle(0, infoY, this.controlWidth, 22, 0x102728, 0.98)
-                .setStrokeStyle(1, 0x4d6e6a, 0.8);
+            const infoBackground = scene.add.rectangle(0, infoY, this.controlWidth, 22, uiTheme.stoneDark, 0.99)
+                .setStrokeStyle(1, uiTheme.border, 0.9);
             const rangeEnd = Math.min(this.options.length, this.optionOffset + visibleOptions.length);
             const infoText = scene.add.text(0, infoY, `SCROLL  •  ${this.optionOffset + 1}–${rangeEnd} OF ${this.options.length}`, {
-                color: "#d9a561", fontSize: "10px", fontFamily: "Arial, sans-serif", fontStyle: "bold"
+                color: uiTheme.ink, fontSize: "10px", fontFamily: uiTheme.sans, fontStyle: "bold"
             }).setOrigin(0.5);
             this.optionsContainer.add([infoBackground, infoText]);
         }
