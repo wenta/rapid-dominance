@@ -1,6 +1,7 @@
 import Dropdown, { DropdownOption } from './components/dropdown';
 import { RoutingButton } from './components/routingButton';
 import GameMode, { deathmatch, t2p2, t2p3, t2p4, t2p5, t2p6, t2p7, t2p8, t3p2, t3p3, t4p2, t4p4, t5p2, t6p2, t7p2, t8p2 } from './gameMode';
+import { clearGameSnapshot, readGameSnapshot } from './gameSave';
 import * as filemapSettings from './settings/filemapSettings';
 import { backgroundWidth, buttonHeight } from './settings/textureSettings';
 
@@ -27,6 +28,7 @@ export class WelcomeScene extends Phaser.Scene {
   aboutButton: RoutingButton;
   instructionButton: RoutingButton;
   startButton: RoutingButton;
+  continueButton: RoutingButton | undefined;
   numberOfPlayersDropdown: Dropdown;
   selectedModeLabel: Dropdown;
   compactLayout: boolean = false;
@@ -53,7 +55,7 @@ export class WelcomeScene extends Phaser.Scene {
     this.load.setBaseURL(".");
     this.load.image("menu_item", "assets/buttonLong_brown.png");
     this.load.image("background", "assets/backgroundColorDesert.png");
-    this.load.image("eft_filemap", "assets/eft_filemap.png");
+    this.load.image("eft_filemap", "assets/eft_filemap-v2.png");
     this.gameMaps.forEach(x => this.load.tilemapCSV(x.id, 'assets/' + x.id + '.csv'));
   }
 
@@ -89,6 +91,7 @@ export class WelcomeScene extends Phaser.Scene {
     this.sceneWidth = this.cameras.main.width;
     this.sceneHeight = this.cameras.main.height;
     this.compactLayout = this.sceneWidth < 900;
+    const savedGame = readGameSnapshot();
 
     this.add.sprite(0, 0, 'background')
       .setOrigin(0)
@@ -117,7 +120,7 @@ export class WelcomeScene extends Phaser.Scene {
     const menuX = this.compactLayout ? this.sceneWidth / 2 : this.sceneWidth * 0.35;
     const startY = Math.max(120, this.sceneHeight * 0.23);
     const rowGap = Math.min(65, (this.sceneHeight * 0.55) / 4);
-    const menuCardHeight = Math.min(this.sceneHeight - 190, rowGap * 4.5);
+    const menuCardHeight = Math.min(this.sceneHeight - 165, rowGap * (savedGame ? 5.35 : 4.5));
     this.add.rectangle(menuX, startY + menuCardHeight / 2 - 36, this.compactLayout ? Math.min(340, this.sceneWidth - 20) : 340, menuCardHeight, 0x102728, 0.94)
       .setStrokeStyle(1, 0x42605e, 0.95).setDepth(2);
     if (!this.compactLayout) {
@@ -207,6 +210,7 @@ export class WelcomeScene extends Phaser.Scene {
       1,
       () => {
         if (this.numberOfPlayers !== 0 && this.selectedMap !== "") {
+          clearGameSnapshot();
           this.scene.start("GameScene", {
             selectedMap: this.selectedMap,
             numberOfPlayers: this.numberOfPlayers,
@@ -216,6 +220,20 @@ export class WelcomeScene extends Phaser.Scene {
       }
     );
     this.startButton.setDepth(100);
+
+    if (savedGame) {
+      this.continueButton = new RoutingButton(
+        this,
+        menuX,
+        startY + (4.15 * rowGap),
+        "menu_item",
+        `CONTINUE  •  ROUND ${savedGame.roundNumber}`,
+        1,
+        () => this.scene.start("GameScene", { snapshot: savedGame })
+      );
+      this.continueButton.setButtonColor(0x3f755c);
+      this.continueButton.setDepth(100);
+    }
 
     // Map preview title on right
     this.previewTitle = this.add.text(this.sceneWidth * 0.72, startY - 20, "Map Preview", {

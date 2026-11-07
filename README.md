@@ -21,7 +21,7 @@ $ cd rapid-dominance
 # Install dependencies
 $ npm install
 
-# Start the local development server (on port 8080)
+# Start the local development server (on port 8085)
 $ npm start
 
 # Build the production ready code to the /dist folder
@@ -33,9 +33,15 @@ $ npm run build
 Rapid Dominance is a clone of the game Enemy Flag (https://www.enemyflag.net/) created by Bartłomiej Baron. It has much more functionality and allows, for example, to play over the network. We recommend!
 
 
+# Saving games
+
+The current match is saved automatically in the browser at the end of every turn. You can also use **Save & Resume** from the pause menu. A compatible save can be resumed from the main menu.
+
+Computer-controlled opponents prioritize strategic targets, protect damaged townhalls, develop mines and barracks, and fortify exposed borders.
+
 # About graphics
 
-All graphics are downloaded from https://opengameart.org. Author: https://www.kenney.nl/. 
+The interface uses assets from [Kenney](https://www.kenney.nl/) and OpenGameArt. The current map tileset is original artwork generated specifically for Rapid Dominance and inspired by the visual language of classic top-down strategy games.
 
 # Join in!
 

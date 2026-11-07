@@ -1,6 +1,8 @@
 import Field from "../src/field";
 import Fields from "../src/fields";
 import Player from "../src/player";
+import { GAME_SAVE_VERSION, isGameSnapshot } from "../src/gameSave";
+import { chooseFrontierBuildField, chooseSafestBuildField, rankAttackTargets } from "../src/botStrategy";
 import * as filemapSettings from "../src/settings/filemapSettings";
 
 function assert(condition: boolean, message: string) {
@@ -56,9 +58,53 @@ function testAnnexationRequiresFourSides() {
     assert(!fields.checkIfFieldCanBeAnnexed(1, grid[0][1]), "the map edge must not count as a surrounding friendly field");
 }
 
+function testSaveValidation() {
+    const player = new Player(0, 1, "Human", true);
+    const field = makeField(0, 0, player.playerId);
+    const snapshot = {
+        version: GAME_SAVE_VERSION,
+        savedAt: new Date().toISOString(),
+        selectedMap: "one_vs_one",
+        numberOfPlayers: 2,
+        selectedGameMode: { numberOfTeams: 2, playersPerTeams: 1, name: "Deathmatch" },
+        roundNumber: 3,
+        currentPlayerId: player.playerId,
+        selectedField: { x: 0, y: 0 },
+        players: [
+            { ...player },
+            { ...new Player(1, 2, "Bot") }
+        ],
+        fields: [{ ...field }]
+    };
+    assert(isGameSnapshot(snapshot), "a complete versioned snapshot must be accepted");
+    assert(!isGameSnapshot({ ...snapshot, version: 999 }), "an incompatible save version must be rejected");
+    assert(!isGameSnapshot({ ...snapshot, players: [] }), "a save with missing players must be rejected");
+}
+
+function testBotTargetPriorities() {
+    const neutral = makeField(2, 0, null);
+    const alliedTownhall = new Field(1, 0, true, false, 1, filemapSettings.townhall, false, 1);
+    const enemyMine = new Field(0, 0, true, false, 2, filemapSettings.mine, false, 1);
+    const enemyTownhall = new Field(3, 0, true, false, 2, filemapSettings.townhall, false, 4);
+    const ranked = rankAttackTargets([neutral, alliedTownhall, enemyMine, enemyTownhall], [0, 1]);
+    assert(ranked[0] === enemyTownhall, "bots must prioritize an enemy townhall over less valuable targets");
+    assert(!ranked.includes(alliedTownhall), "bots must never rank an allied field as an attack target");
+}
+
+function testBotBuildPlacement() {
+    const safe = makeField(0, 0, 0);
+    const exposed = makeField(1, 0, 0);
+    const danger = (field: Field) => field === exposed ? 3 : 0;
+    assert(chooseSafestBuildField([exposed, safe], danger) === safe, "economic buildings should prefer protected sectors");
+    assert(chooseFrontierBuildField([safe, exposed], danger) === exposed, "defensive buildings should prefer exposed sectors");
+}
+
 testExperienceProgression();
 testActionPointIncome();
 testFailedAttackArmyGrowth();
 testAnnexationRequiresFourSides();
+testSaveValidation();
+testBotTargetPriorities();
+testBotBuildPlacement();
 
 console.log("Rule regression tests passed.");

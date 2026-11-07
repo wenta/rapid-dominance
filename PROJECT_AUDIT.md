@@ -33,6 +33,8 @@ Stan na 2026-11-07. Zakres porównania obejmuje jednoosobową i lokalną rozgryw
 - Lista graczy nie grupowała drużyn, a panel akcji nie zwijał się na małych ekranach.
 - Instrukcja była nieaktualna, a plik `pl` zawierał tekst angielski.
 - Metadane npm wskazywały stare repozytorium i inną licencję; produkcyjny build działał w trybie developerskim.
+- Brakowało zapisu rozgrywki; teraz stan partii jest automatycznie zapisywany, walidowany i możliwy do wznowienia z menu głównego.
+- Boty wybierały niemal wyłącznie losowe ataki i zbyt wcześnie stawiały kolejne ratusze. Obecnie oceniają wartość celów, rozwijają kopalnie i armię, naprawiają krytyczne budynki oraz fortyfikują zagrożone granice.
 
 ## Testy i ryzyka
 

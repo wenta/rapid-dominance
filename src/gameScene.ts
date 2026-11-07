@@ -1,12 +1,14 @@
 import 'phaser';
 
 import { Actions } from './actions';
+import { chooseFrontierBuildField, chooseSafestBuildField, rankAttackTargets } from './botStrategy';
 import { FadingNumber } from './components/fadingNumber';
 import { Popup } from './components/popup';
 import { RoutingButton } from './components/routingButton';
 import Field from './field';
 import Fields from './fields';
 import GameMode, { deathmatch } from './gameMode';
+import { clearGameSnapshot, GAME_SAVE_VERSION, GameSnapshot, isGameSnapshot, writeGameSnapshot } from './gameSave';
 import LeftMenu from './menus/leftMenu';
 import RightMenu from './menus/rightMenu';
 import Player from './player';
@@ -47,13 +49,13 @@ export class GameScene extends Phaser.Scene {
   selectedMap: string = "grid"
   tilemapY = 0
   selectedGameMode: GameMode = deathmatch
-  towerMarkers: Map<string, Phaser.GameObjects.Graphics> = new Map()
   rightPanelToggle: Phaser.GameObjects.Text
   leftPanelToggle: Phaser.GameObjects.Text
   roundNumber: number = 1
   uiPaused: boolean = false
   gameEnded: boolean = false
   modalOverlay: Phaser.GameObjects.Container | undefined
+  pendingSnapshot: GameSnapshot | undefined
 
   constructor() {
     super({
@@ -63,14 +65,27 @@ export class GameScene extends Phaser.Scene {
 
   init(data): void {
     this.delta = 1000;
-    this.selectedMap = data.selectedMap;
-    this.numberOfPlayers = data.numberOfPlayers;
-    this.selectedGameMode = data.selectedGameMode;
+    this.gameEnded = false;
+    this.uiPaused = false;
+    this.modalOverlay = undefined;
+    this.roundNumber = 1;
+    this.timeSinceLastIncrement = 0;
+    this.pendingSnapshot = isGameSnapshot(data?.snapshot) ? data.snapshot : undefined;
+    if (this.pendingSnapshot) {
+      this.selectedMap = this.pendingSnapshot.selectedMap;
+      this.numberOfPlayers = this.pendingSnapshot.numberOfPlayers;
+      const mode = this.pendingSnapshot.selectedGameMode;
+      this.selectedGameMode = new GameMode(mode.numberOfTeams, mode.playersPerTeams, mode.name);
+    } else {
+      this.selectedMap = data.selectedMap;
+      this.numberOfPlayers = data.numberOfPlayers;
+      this.selectedGameMode = data.selectedGameMode;
+    }
   }
 
   preload(): void {
     this.load.setBaseURL(".");
-    this.load.image("eft_filemap", "assets/eft_filemap.png");
+    this.load.image("eft_filemap", "assets/eft_filemap-v2.png");
     this.load.image("menu_item", "assets/buttonLong_brown.png");
     this.load.image("background2", "assets/backgroundColorFall.png");
     this.load.image("tilemap_border", "assets/buttonSquare_brown_pressed.png");
@@ -251,6 +266,101 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private restoreSnapshot(snapshot: GameSnapshot): boolean {
+    const expectedFields = gameSettings.mapSizeX * gameSettings.mapSizeY;
+    const validCoordinates = snapshot.fields.every(field =>
+      field.x >= 0 && field.x < gameSettings.mapSizeX && field.y >= 0 && field.y < gameSettings.mapSizeY
+    );
+    const validSelection = snapshot.selectedField.x >= 0 && snapshot.selectedField.x < gameSettings.mapSizeX &&
+      snapshot.selectedField.y >= 0 && snapshot.selectedField.y < gameSettings.mapSizeY;
+    if (snapshot.fields.length !== expectedFields || !validCoordinates || !validSelection) return false;
+
+    const restoredPlayers = snapshot.players.map(saved => {
+      const player = new Player(saved.playerId, saved.team, saved.name, saved.isHuman, saved.color, saved.gold, saved.troops, saved.isActive);
+      player.actionPointsLimit = saved.actionPointsLimit;
+      player.actionPoints = saved.actionPoints;
+      player.experience = saved.experience;
+      player.failedAttacksReceived = saved.failedAttacksReceived;
+      return player;
+    });
+    const restoredCurrentPlayer = restoredPlayers.find(player => player.playerId === snapshot.currentPlayerId);
+    const restoredSelection = this.fields.get(snapshot.selectedField.y, snapshot.selectedField.x);
+    if (!restoredCurrentPlayer || !restoredSelection) return false;
+
+    snapshot.fields.forEach(saved => {
+      const field = this.fields.get(saved.y, saved.x);
+      field.player = saved.player;
+      field.occupied = saved.occupied;
+      field.blocked = saved.blocked;
+      field.typeField = saved.typeField;
+      field.resistance = saved.resistance;
+      field.isGoldDeposit = saved.isGoldDeposit;
+      field.initialFogOfWar = saved.initialFogOfWar;
+      field.temporaryFogOfWar = saved.temporaryFogOfWar;
+      this.map.putTileAt(saved.typeField, saved.x, saved.y, true, 0);
+    });
+
+    this.players = restoredPlayers;
+    this.currentPlayer = restoredCurrentPlayer;
+    this.roundNumber = snapshot.roundNumber;
+    this.selectedField = new SelectedField(restoredSelection, undefined);
+    this.refreshFogOfWar();
+    return true;
+  }
+
+  private createSnapshot(): GameSnapshot {
+    const fields: GameSnapshot["fields"] = [];
+    this.fields.forEach(field => fields.push({
+      player: field.player,
+      occupied: field.occupied,
+      blocked: field.blocked,
+      x: field.x,
+      y: field.y,
+      typeField: field.typeField,
+      resistance: field.resistance,
+      isGoldDeposit: field.isGoldDeposit,
+      initialFogOfWar: field.initialFogOfWar,
+      temporaryFogOfWar: field.temporaryFogOfWar
+    }));
+
+    return {
+      version: GAME_SAVE_VERSION,
+      savedAt: new Date().toISOString(),
+      selectedMap: this.selectedMap,
+      numberOfPlayers: this.numberOfPlayers,
+      selectedGameMode: {
+        numberOfTeams: this.selectedGameMode.numberOfTeams,
+        playersPerTeams: this.selectedGameMode.playersPerTeams,
+        name: this.selectedGameMode.name
+      },
+      roundNumber: this.roundNumber,
+      currentPlayerId: this.currentPlayer.playerId,
+      selectedField: { x: this.selectedField.field.x, y: this.selectedField.field.y },
+      players: this.players.map(player => ({
+        playerId: player.playerId,
+        color: player.color,
+        gold: player.gold,
+        troops: player.troops,
+        actionPointsLimit: player.actionPointsLimit,
+        actionPoints: player.actionPoints,
+        isHuman: player.isHuman,
+        isActive: player.isActive,
+        experience: player.experience,
+        team: player.team,
+        name: player.name,
+        failedAttacksReceived: player.failedAttacksReceived
+      })),
+      fields
+    };
+  }
+
+  private saveCurrentGame(showFeedback: boolean = true): boolean {
+    if (!this.fields || !this.currentPlayer || !this.selectedField || this.gameEnded) return false;
+    const saved = writeGameSnapshot(this.createSnapshot());
+    if (showFeedback) this.createPopup(saved ? "Game saved." : "The browser could not save this game.");
+    return saved;
+  }
+
   createRigthPanel() {
     const bindedAction = this.performAction.bind(this);
     const panelScale = Math.min(1, this.panelHeight / 660);
@@ -327,6 +437,10 @@ export class GameScene extends Phaser.Scene {
 
     this.initializeFields();
     this.initializePlayers();
+    if (this.pendingSnapshot && !this.restoreSnapshot(this.pendingSnapshot)) {
+      clearGameSnapshot();
+      this.pendingSnapshot = undefined;
+    }
     this.createLeftPanel();
     if (compact) {
       this.leftPanel.setVisible(false).setDepth(250);
@@ -344,6 +458,7 @@ export class GameScene extends Phaser.Scene {
     this.updateHumanInfo();
     this.updateSelectedField(this.selectedField.field.x, this.selectedField.field.y);
     this.setupInput();
+    this.saveCurrentGame(false);
 
   }
 
@@ -380,34 +495,6 @@ export class GameScene extends Phaser.Scene {
       x.typeField === filemapSettings.townhall && this.isOrthogonallyAdjacent(x, field)
     );
     return hasSharedEdge && (ownedNeighbors.length >= 2 || hasAdjacentTownhall);
-  }
-
-  private towerKey(field: Field): string {
-    return `${field.x}:${field.y}`;
-  }
-
-  private drawObservationTower(field: Field) {
-    this.removeObservationTowerMarker(field);
-    const tile = this.map.getTileAt(field.x, field.y);
-    if (!tile) return;
-
-    const marker = this.add.graphics();
-    marker.fillStyle(0x6f5131, 1);
-    marker.fillRect(tile.pixelX + 40, tile.pixelY + 38, 32, 58);
-    marker.fillStyle(0xd7b46a, 1);
-    marker.fillTriangle(tile.pixelX + 30, tile.pixelY + 42, tile.pixelX + 82, tile.pixelY + 42, tile.pixelX + 56, tile.pixelY + 14);
-    marker.lineStyle(6, 0x3f2f21, 1);
-    marker.strokeRect(tile.pixelX + 40, tile.pixelY + 38, 32, 58);
-    marker.setScale(this.newScale);
-    marker.setPosition(this.centralPanelX, this.tilemapY);
-    marker.setDepth(10);
-    this.towerMarkers.set(this.towerKey(field), marker);
-  }
-
-  private removeObservationTowerMarker(field: Field) {
-    const key = this.towerKey(field);
-    this.towerMarkers.get(key)?.destroy();
-    this.towerMarkers.delete(key);
   }
 
   drawBorders() {
@@ -483,45 +570,29 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  botAttack(ns: Field[]): boolean {
+  private tryBotAttack(): boolean {
     if (this.currentPlayer.troops <= 0 || this.currentPlayer.actionPoints < gameSettings.fieldAttackAPCost) {
       return false;
     }
-    function randomInt(min, max) {
-      return Math.floor(Math.random() * (max - min + 1) + min)
-    }
-    while (ns.length > 0) {
-      let index = randomInt(0, ns.length - 1)
-      let fieldToAttack = ns[index]
-      let checkIfTownhalls = ns.find(x => x.typeField === filemapSettings.townhall)
-      if (checkIfTownhalls) fieldToAttack = checkIfTownhalls
-      let team: Number[] = this.players.filter(x => x.team === this.currentPlayer.team).map(x => x.playerId)
-      let blockFriendlyField: boolean = fieldToAttack.player !== null ? team.includes(fieldToAttack.player) : false
-      if (!blockFriendlyField) {
-        if (this.canCurrentPlayerAttack(fieldToAttack)) {
-          this.attack(fieldToAttack);
-          return true
-        }
-        else {
-          ns.splice(index, 1);
-        }
-      } else {
-        ns.splice(index, 1);
-      }
-    }
-
-    return false
+    const alliedIds = this.players
+      .filter(player => player.team === this.currentPlayer.team)
+      .map(player => player.playerId);
+    const candidates = rankAttackTargets(
+      this.fields.getNeighboringFieldsByPlayer(this.currentPlayer.playerId),
+      alliedIds
+    ).filter(field => this.canCurrentPlayerAttack(field));
+    const target = candidates[0];
+    return target ? this.attack(target) : false;
   }
 
-  getPossibleFieldsToAttack() { // for bot
-    let neighbours = this.fields.getNeighboringFieldsByPlayer(this.currentPlayer.playerId).filter(x => !x.blocked)
-    let neighboursOccupied = neighbours.filter(x => x.occupied)
-    let neighborFieldUnOccupied = neighbours.filter(x => !x.occupied)
-
-    let res = this.botAttack(neighboursOccupied)
-    if (!res) {
-      this.botAttack(neighborFieldUnOccupied)
-    }
+  private countBotFrontierNeighbors(field: Field): number {
+    const alliedIds = this.players
+      .filter(player => player.team === this.currentPlayer.team)
+      .map(player => player.playerId);
+    return this.fields.getEncirclingFieldsByField(field)
+      .filter(neighbor => this.isOrthogonallyAdjacent(field, neighbor))
+      .filter(neighbor => !neighbor.blocked && (neighbor.player === null || !alliedIds.includes(neighbor.player)))
+      .length;
   }
 
   humanAttack(field: Field) {
@@ -660,8 +731,6 @@ export class GameScene extends Phaser.Scene {
             if (field.temporaryFogOfWar && !field.initialFogOfWar) {
               tile.setAlpha(0.4);
             }
-            const marker = this.towerMarkers.get(this.towerKey(field));
-            if (marker) marker.setAlpha(tile.alpha);
           }
         })
       }
@@ -687,7 +756,6 @@ export class GameScene extends Phaser.Scene {
           const eliminated = field.typeField === filemapSettings.townhall && this.townhallDestroyed(field);
           this.currentPlayer.increaseExperience(this.getBuildingDestructionExperience(attackedType, defendingPlayer !== undefined));
           if (eliminated) this.currentPlayer.increaseExperience(gameSettings.eliminatingAPlayer);
-          if (field.typeField === filemapSettings.observationTower) this.removeObservationTowerMarker(field);
           if (field.isGoldDeposit) {
             field.typeField = filemapSettings.goldDeposit;
             if (tile) tile.index = filemapSettings.goldDeposit;
@@ -781,6 +849,7 @@ export class GameScene extends Phaser.Scene {
     else {
       this.showEndGameOverlay(true, "Victory", "All opposing teams have lost their townhalls.");
     }
+    this.saveCurrentGame(false);
   }
 
   buildBarrack(field: Field = this.selectedField.field): boolean {
@@ -828,21 +897,31 @@ export class GameScene extends Phaser.Scene {
     const blocker = this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, this.sceneWidth, this.sceneHeight, 0x020909, 0.78)
       .setInteractive();
     const cardWidth = Math.min(420, this.sceneWidth - 40);
-    const card = this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, cardWidth, 330, 0x102728, 1)
+    const card = this.add.rectangle(this.sceneWidth / 2, this.sceneHeight / 2, cardWidth, 400, 0x102728, 1)
       .setStrokeStyle(2, 0xc18b4e, 0.95);
-    const title = this.add.text(this.sceneWidth / 2, this.sceneHeight / 2 - 122, "GAME PAUSED", {
+    const title = this.add.text(this.sceneWidth / 2, this.sceneHeight / 2 - 158, "GAME PAUSED", {
       fontFamily: "Arial, sans-serif", fontSize: "27px", color: "#f2d6a2", fontStyle: "bold"
     }).setOrigin(0.5);
-    const subtitle = this.add.text(this.sceneWidth / 2, this.sceneHeight / 2 - 88, `Round ${this.roundNumber}  •  ${this.selectedMap.replace(/_/g, " ")}`, {
+    const subtitle = this.add.text(this.sceneWidth / 2, this.sceneHeight / 2 - 124, `Round ${this.roundNumber}  •  ${this.selectedMap.replace(/_/g, " ")}`, {
       fontFamily: "Arial, sans-serif", fontSize: "13px", color: "#88a29f"
     }).setOrigin(0.5);
-    const resume = new RoutingButton(this, this.sceneWidth / 2, this.sceneHeight / 2 - 25, "", "RESUME", 1, () => this.closePauseMenu());
-    const restart = new RoutingButton(this, this.sceneWidth / 2, this.sceneHeight / 2 + 40, "", "RESTART MATCH", 1, () => {
+    const resume = new RoutingButton(this, this.sceneWidth / 2, this.sceneHeight / 2 - 72, "", "RESUME", 1, () => this.closePauseMenu());
+    const save = new RoutingButton(this, this.sceneWidth / 2, this.sceneHeight / 2 - 12, "", "SAVE & RESUME", 1, () => {
+      const saved = this.saveCurrentGame(false);
+      this.closePauseMenu();
+      this.createPopup(saved ? "Game saved." : "The browser could not save this game.");
+    });
+    save.setButtonColor(0x3f755c);
+    const restart = new RoutingButton(this, this.sceneWidth / 2, this.sceneHeight / 2 + 48, "", "RESTART MATCH", 1, () => {
+      clearGameSnapshot();
       this.scene.restart({ selectedMap: this.selectedMap, numberOfPlayers: this.numberOfPlayers, selectedGameMode: this.selectedGameMode });
     });
-    const mainMenu = new RoutingButton(this, this.sceneWidth / 2, this.sceneHeight / 2 + 105, "", "MAIN MENU", 1, () => this.scene.start("WelcomeScene", {}));
+    const mainMenu = new RoutingButton(this, this.sceneWidth / 2, this.sceneHeight / 2 + 108, "", "MAIN MENU", 1, () => {
+      this.saveCurrentGame(false);
+      this.scene.start("WelcomeScene", {});
+    });
     mainMenu.setButtonColor(0x733f3a);
-    overlay.add([blocker, card, title, subtitle, resume, restart, mainMenu]);
+    overlay.add([blocker, card, title, subtitle, resume, save, restart, mainMenu]);
     this.modalOverlay = overlay;
   }
 
@@ -857,6 +936,7 @@ export class GameScene extends Phaser.Scene {
   private showEndGameOverlay(won: boolean, titleText: string, detail: string) {
     if (this.gameEnded) return;
     this.gameEnded = true;
+    clearGameSnapshot();
     this.uiPaused = true;
     this.modalOverlay?.destroy(true);
     const overlay = this.add.container(0, 0).setDepth(2500);
@@ -872,6 +952,7 @@ export class GameScene extends Phaser.Scene {
       fontFamily: "Arial, sans-serif", fontSize: "15px", color: "#c6d1cd", align: "center", wordWrap: { width: cardWidth - 50 }
     }).setOrigin(0.5);
     const replay = new RoutingButton(this, this.sceneWidth / 2, this.sceneHeight / 2 + 28, "", "PLAY AGAIN", 1, () => {
+      clearGameSnapshot();
       this.scene.restart({ selectedMap: this.selectedMap, numberOfPlayers: this.numberOfPlayers, selectedGameMode: this.selectedGameMode });
     });
     const menu = new RoutingButton(this, this.sceneWidth / 2, this.sceneHeight / 2 + 92, "", "MAIN MENU", 1, () => this.scene.start("WelcomeScene", {}));
@@ -961,8 +1042,7 @@ export class GameScene extends Phaser.Scene {
 
     field.typeField = filemapSettings.observationTower;
     field.resistance = gameSettings.observationTowerResistance;
-    this.map.putTileAt(filemapSettings.blank, field.x, field.y, true, 0);
-    this.drawObservationTower(field);
+    this.map.putTileAt(filemapSettings.observationTower, field.x, field.y, true, 0);
     this.currentPlayer.descreaseGold(gameSettings.observationTowerGoldCost);
     this.currentPlayer.descreaseActionPoints(gameSettings.observationTowerActionPointCost);
     this.currentPlayer.increaseExperience(gameSettings.constructionOfTheBuilding);
@@ -1018,7 +1098,6 @@ export class GameScene extends Phaser.Scene {
       this.createPopup("Not enough action points to demolish this building.");
       return false;
     }
-    if (field.typeField === filemapSettings.observationTower) this.removeObservationTowerMarker(field);
     field.typeField = field.isGoldDeposit ? filemapSettings.goldDeposit : filemapSettings.blank;
     field.resistance = gameSettings.blankFieldResistance;
     this.map.putTileAt(field.typeField, field.x, field.y, true, 0);
@@ -1081,30 +1160,87 @@ export class GameScene extends Phaser.Scene {
 
   handleBotMove() {
     this.rightPanel.showPlayerActionsAndBuilding(false);
-    const currentActionPoints = this.currentPlayer.actionPoints
-    const playerFieldsFlatten = this.fields.getPlayerFields(this.currentPlayer.playerId);
-    const blankPlayerFields = playerFieldsFlatten.filter(x => x.typeField === filemapSettings.blank);
-    const freeGoldDeposits = playerFieldsFlatten.filter(x => x.typeField === filemapSettings.goldDeposit);
-    if (this.currentPlayer.troops === 0 && blankPlayerFields.length > 0) {
-      this.buildBarrack(blankPlayerFields[0]);
+    const ownFields = this.fields.getPlayerFields(this.currentPlayer.playerId);
+    const buildableFields = ownFields.filter(field =>
+      field.typeField === filemapSettings.blank || field.typeField === filemapSettings.goldDeposit
+    );
+    const freeGoldDeposits = buildableFields.filter(field => field.typeField === filemapSettings.goldDeposit);
+    const mines = ownFields.filter(field => field.typeField === filemapSettings.mine);
+    const barracks = ownFields.filter(field => field.typeField === filemapSettings.barrack);
+    const townhalls = ownFields.filter(field => field.typeField === filemapSettings.townhall);
+    const towers = ownFields.filter(field => field.typeField === filemapSettings.observationTower);
+    const damagedBuildings = ownFields
+      .filter(field => this.getMaximumResistance(field.typeField) > field.resistance)
+      .sort((a, b) => {
+        const aPriority = a.typeField === filemapSettings.townhall ? 1 : 0;
+        const bPriority = b.typeField === filemapSettings.townhall ? 1 : 0;
+        return (bPriority - aPriority) || (a.resistance - b.resistance);
+      });
+    const safestBuildField = chooseSafestBuildField(buildableFields, field => this.countBotFrontierNeighbors(field));
+    const frontierBuildField = chooseFrontierBuildField(buildableFields, field => this.countBotFrontierNeighbors(field));
+
+    const perform = (action: () => void | boolean): boolean => {
+      const before = `${this.currentPlayer.actionPoints}:${this.currentPlayer.gold}:${this.currentPlayer.troops}`;
+      action();
+      return before !== `${this.currentPlayer.actionPoints}:${this.currentPlayer.gold}:${this.currentPlayer.troops}`;
+    };
+    const canAfford = (gold: number, actionPoints: number): boolean =>
+      this.currentPlayer.gold >= gold && this.currentPlayer.actionPoints >= actionPoints;
+    const canRepair = (field: Field): boolean => {
+      const missingResistance = this.getMaximumResistance(field.typeField) - field.resistance;
+      return missingResistance > 0 && canAfford(
+        missingResistance * gameSettings.repairGoldCostPerPoint,
+        gameSettings.repairActionPointCost
+      );
+    };
+
+    const criticalTownhall = damagedBuildings.find(field =>
+      field.typeField === filemapSettings.townhall && field.resistance <= 1
+    );
+    if (criticalTownhall && canRepair(criticalTownhall) && perform(() => this.repairBuilding(criticalTownhall))) return;
+
+    if (freeGoldDeposits[0] && canAfford(gameSettings.mineGoldCost, gameSettings.mineActionPointCost) &&
+      perform(() => this.buildMine(freeGoldDeposits[0]))) return;
+
+    if (this.currentPlayer.troops <= 3 && safestBuildField &&
+      canAfford(gameSettings.barrackGoldCost, gameSettings.barrackActionPointCost) &&
+      perform(() => this.buildBarrack(safestBuildField))) return;
+
+    if (mines.length === 0 && ownFields.length >= 3 && safestBuildField &&
+      canAfford(gameSettings.mineGoldCost, gameSettings.mineActionPointCost) &&
+      perform(() => this.buildMine(safestBuildField))) return;
+
+    if (this.tryBotAttack()) return;
+
+    const desiredBarracks = Math.max(1, Math.floor(ownFields.length / 12));
+    if (this.currentPlayer.troops < 20 && barracks.length < desiredBarracks && safestBuildField &&
+      canAfford(gameSettings.barrackGoldCost, gameSettings.barrackActionPointCost) &&
+      perform(() => this.buildBarrack(safestBuildField))) return;
+
+    if (towers.length === 0 && ownFields.length >= 6 && frontierBuildField &&
+      canAfford(gameSettings.observationTowerGoldCost, gameSettings.observationTowerActionPointCost) &&
+      perform(() => this.buildObservationTower(frontierBuildField))) return;
+
+    if (townhalls.length > 0 && ownFields.length >= townhalls.length * 12 &&
+      this.currentPlayer.gold >= gameSettings.townhallGoldCost + 200 &&
+      this.currentPlayer.actionPoints >= gameSettings.townhallActionPointCost && safestBuildField &&
+      perform(() => this.buildTownhall(safestBuildField))) return;
+
+    const repairableBuilding = damagedBuildings.find(canRepair);
+    if (repairableBuilding && perform(() => this.repairBuilding(repairableBuilding))) return;
+
+    const exposedFrontier = buildableFields
+      .filter(field => this.countBotFrontierNeighbors(field) >= 2)
+      .sort((a, b) => this.countBotFrontierNeighbors(b) - this.countBotFrontierNeighbors(a))[0];
+    if (exposedFrontier && this.currentPlayer.gold >= 600) {
+      if (this.currentPlayer.gold >= gameSettings.stoneWallGoldCost &&
+        this.currentPlayer.actionPoints >= gameSettings.stoneWallActionPointCost &&
+        perform(() => this.buildStoneWall(exposedFrontier))) return;
+      if (this.currentPlayer.actionPoints >= gameSettings.woodenWallActionPointCost &&
+        perform(() => this.buildWoodenWall(exposedFrontier))) return;
     }
-    else if (this.currentPlayer.actionPoints >= gameSettings.townhallActionPointCost &&
-      this.currentPlayer.gold >= gameSettings.townhallGoldCost &&
-      blankPlayerFields.length > 0) {
-      this.buildTownhall(blankPlayerFields[0]);
-    }
-    else if (freeGoldDeposits.length > 0 &&
-      this.currentPlayer.actionPoints >= gameSettings.mineActionPointCost &&
-      this.currentPlayer.gold >= gameSettings.mineGoldCost) {
-      this.buildMine(freeGoldDeposits[0]);
-    }
-    else {
-      this.getPossibleFieldsToAttack();
-    }
-    if (currentActionPoints === this.currentPlayer.actionPoints) {
-      // bot not able to do any move - end turn
-      this.nextTurn();
-    }
+
+    this.nextTurn();
   }
 
   nextMove() {
